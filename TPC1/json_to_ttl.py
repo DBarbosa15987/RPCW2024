@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 import re
+import sys
 
 def getDataXSD(data):
     try:
@@ -17,6 +18,9 @@ def getDataXSD(data):
     except ValueError:
         return ""
 
+ficheiroOutput = "ontology_plantas_output.owl"
+if(len(sys.argv)>1):
+    ficheiroOutput = sys.argv[1]
 
 f = open("plantas.json")
 bd = json.load(f)
@@ -26,7 +30,6 @@ f = open("ontology_plantas.owl")
 ttl = f.read()
 f.close()
 
-ttl = ""
 i = 0
 ontologia = "http://rpcw.di.uminho.pt/2024/plantas"
 
@@ -37,6 +40,7 @@ entidadesSet = set()
 estadosSet = set()
 plantasSet = set()
 localizacaoSet = set()
+valoresInvalidos = set(["a identificar","","A identificar"])
 
 ttl+="""
 
@@ -57,7 +61,7 @@ for reg in bd:
     ### ORIGEM
     registoOrigem = ""
 
-    if(reg['Origem'] != ""):
+    if(reg['Origem'] not in valoresInvalidos):
 
         origem = reg['Origem'].replace(' ','_')
 
@@ -70,8 +74,8 @@ for reg in bd:
             registoOrigem = f"""
 ###  {ontologia}#{origem}
     {individuo} rdf:type owl:NamedIndividual ,
-            :Empresa ;
-    :Nome_Empresa "{reg['Origem']}"^^xsd:string .
+            :Entidade ;
+    :Nome_Entidade "{reg['Origem']}"^^xsd:string .
 """
             
             entidadesSet.add(origem)
@@ -79,7 +83,7 @@ for reg in bd:
     ###GESTOR
     registoGestor = ""
 
-    if(reg['Gestor'] != ""):
+    if(reg['Gestor'] not in valoresInvalidos):
 
         gestor = reg['Gestor'].replace(' ','_')
         
@@ -91,8 +95,8 @@ for reg in bd:
             registoGestor = f"""
 ###  {ontologia}#{gestor}
     {individuo} rdf:type owl:NamedIndividual ,
-            :Empresa ;
-    :Nome_Empresa "{reg['Gestor']}"^^xsd:string .
+            :Entidade ;
+    :Nome_Entidade "{reg['Gestor']}"^^xsd:string .
 """
             
             entidadesSet.add(gestor)
@@ -100,7 +104,7 @@ for reg in bd:
     ### ESTADO
     registoEstado = ""
 
-    if(reg['Estado'] != ""):
+    if(reg['Estado'] not in valoresInvalidos):
 
         estado = reg['Estado']
         e = f":é :{estado} ;"
@@ -120,13 +124,13 @@ for reg in bd:
     ### LOCALIZAÇÃO
     registoLocalizacao = ""
     listaLocalizacao = []
-    listaLocalizacao += [reg['Freguesia']] if reg['Freguesia'] != "" else []
-    listaLocalizacao += [reg['Rua']] if reg['Rua'] != "" else []
-    listaLocalizacao += [reg['Local']] if reg['Local'] != "" else []
+    listaLocalizacao += [reg['Freguesia']] if reg['Freguesia'] not in valoresInvalidos else []
+    listaLocalizacao += [reg['Rua']] if reg['Rua'] not in valoresInvalidos else []
+    listaLocalizacao += [reg['Local']] if reg['Local'] not in valoresInvalidos else []
     
     localizacao = f"{'-'.join(listaLocalizacao)}".replace(' ','_')
 
-    if(localizacao != ""):
+    if(localizacao not in valoresInvalidos):
         
         individuo = f"<{ontologia}#{localizacao}>" if pIndividuo.search(localizacao) is not None else f":{localizacao}"
         localizado_em = f":localizado_em {individuo} ;"
@@ -149,9 +153,13 @@ for reg in bd:
 
     ### PLANTA
     registoPlanta = ""
-    #TODO
-    planta = f"{reg['Nome Científico']}-{reg['Espécie']}".replace(' ','_').replace('.','')
-    if(planta != ""):
+    listaPlanta = []
+    listaPlanta += [reg['Nome Científico']] if reg['Nome Científico'] not in valoresInvalidos else []
+    listaPlanta += [reg['Espécie']] if reg['Espécie'] not in valoresInvalidos else []
+
+
+    planta = f"{'-'.join(listaPlanta)}".replace(' ','_').replace('.','')
+    if(planta not in valoresInvalidos):
 
         individuo = f"<{ontologia}#{planta}>" if pIndividuo.search(planta) is not None else f":{planta}"
 
@@ -213,6 +221,6 @@ for reg in bd:
     i+=1
 
 
-f = open("ontology_plantas_output.owl","w")
+f = open(ficheiroOutput,"w")
 f.write(ttl)
 f.close()
