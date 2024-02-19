@@ -1,0 +1,178 @@
+@prefix : <http://rpcw.di.uminho.pt/2024/untitled-ontology-6#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://rpcw.di.uminho.pt/2024/untitled-ontology-6> .
+
+<http://rpcw.di.uminho.pt/2024/untitled-ontology-6> rdf:type owl:Ontology .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#gerido_por
+:gerido_por rdf:type owl:ObjectProperty ;
+            rdfs:domain :Registo ;
+            rdfs:range :Entidade .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#localizado_em
+:localizado_em rdf:type owl:ObjectProperty ;
+               rdfs:domain :Registo ;
+               rdfs:range :Localização .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#plantado_por
+:plantado_por rdf:type owl:ObjectProperty ;
+              rdfs:domain :Plantação ;
+              rdfs:range :Entidade .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#tem
+:tem rdf:type owl:ObjectProperty ;
+     rdfs:domain :Registo ;
+     rdfs:range :Plantação .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#é
+:é rdf:type owl:ObjectProperty ;
+   rdfs:domain :Planta ;
+   rdfs:range :Estado .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#é_de
+:é_de rdf:type owl:ObjectProperty ;
+      rdfs:domain :Plantação ;
+      rdfs:range :Planta .
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Caldeira
+:Caldeira rdf:type owl:DatatypeProperty ;
+          rdfs:domain :Plantação ;
+          rdfs:range xsd:string .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Código_de_rua
+:Código_de_rua rdf:type owl:DatatypeProperty ;
+               rdfs:domain :Localização ;
+               rdfs:range xsd:int .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Data_de_Plantação
+:Data_de_Plantação rdf:type owl:DatatypeProperty ;
+                   rdfs:domain :Plantação ;
+                   rdfs:range xsd:dateTime .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Data_de_atualização
+:Data_de_atualização rdf:type owl:DatatypeProperty ;
+                     rdfs:domain :Registo ;
+                     rdfs:range xsd:dateTime .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Espécie
+:Espécie rdf:type owl:DatatypeProperty ;
+         rdfs:domain :Planta ;
+         rdfs:range xsd:string .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Freguesia
+:Freguesia rdf:type owl:DatatypeProperty ;
+           rdfs:domain :Localização ;
+           rdfs:range xsd:string .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Implantação
+:Implantação rdf:type owl:DatatypeProperty ;
+             rdfs:domain :Plantação ;
+             rdfs:range xsd:string .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Local
+:Local rdf:type owl:DatatypeProperty ;
+       rdfs:domain :Localização ;
+       rdfs:range xsd:string .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Nome_Científico
+:Nome_Científico rdf:type owl:DatatypeProperty ;
+                 rdfs:domain :Planta ;
+                 rdfs:range xsd:string .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Nome_Empresa
+:Nome_Empresa rdf:type owl:DatatypeProperty ;
+              rdfs:domain :Entidade ;
+              rdfs:range xsd:string .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Número_de_intervenções
+:Número_de_intervenções rdf:type owl:DatatypeProperty ;
+                        rdfs:domain :Registo ;
+                        rdfs:range xsd:int .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Número_de_registo
+:Número_de_registo rdf:type owl:DatatypeProperty ;
+                   rdfs:domain :Registo .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Rua
+:Rua rdf:type owl:DatatypeProperty ;
+     rdfs:domain :Localização ;
+     rdfs:range xsd:string .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Tipo_Estado
+:Tipo_Estado rdf:type owl:DatatypeProperty ;
+             rdfs:domain :Estado ;
+             rdfs:range xsd:string .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Tutor
+:Tutor rdf:type owl:DatatypeProperty ;
+       rdfs:domain :Plantação ;
+       rdfs:range xsd:string .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#id
+:id rdf:type owl:DatatypeProperty ;
+    rdfs:domain :Registo ;
+    rdfs:range xsd:int .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Entidade
+:Entidade rdf:type owl:Class .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Estado
+:Estado rdf:type owl:Class .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Localização
+:Localização rdf:type owl:Class .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Planta
+:Planta rdf:type owl:Class .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Plantação
+:Plantação rdf:type owl:Class .
+
+
+###  http://rpcw.di.uminho.pt/2024/untitled-ontology-6#Registo
+:Registo rdf:type owl:Class .
+
+
+###  Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi
