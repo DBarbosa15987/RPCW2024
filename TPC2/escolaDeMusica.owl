@@ -1,0 +1,114 @@
+@prefix : <http://rpcw.di.uminho.pt/2024/escola-de-musica#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://rpcw.di.uminho.pt/2024/escola-de-musica> .
+
+<http://rpcw.di.uminho.pt/2024/escola-de-musica> rdf:type owl:Ontology .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#e_de
+:e_de rdf:type owl:ObjectProperty ;
+      owl:inverseOf :lecionado_em ;
+      rdfs:domain :Curso ;
+      rdfs:range :Instrumento .
+
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#esta_inscrito_em
+:esta_inscrito_em rdf:type owl:ObjectProperty ;
+                  owl:inverseOf :tem_estudante ;
+                  rdfs:domain :Aluno ;
+                  rdfs:range :Curso .
+
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#lecionado_em
+:lecionado_em rdf:type owl:ObjectProperty ;
+              rdfs:domain :Instrumento ;
+              rdfs:range :Curso .
+
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#tem_estudante
+:tem_estudante rdf:type owl:ObjectProperty ;
+               rdfs:domain :Curso ;
+               rdfs:range :Aluno .
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#alunoId
+:alunoId rdf:type owl:DatatypeProperty ;
+         rdfs:domain :Aluno ;
+         rdfs:range xsd:string .
+
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#anoCurso
+:anoCurso rdf:type owl:DatatypeProperty ;
+          rdfs:domain :Aluno ;
+          rdfs:range xsd:int .
+
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#cursoId
+:cursoId rdf:type owl:DatatypeProperty ;
+         rdfs:domain :Curso ;
+         rdfs:range xsd:string .
+
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#dataNasc
+:dataNasc rdf:type owl:DatatypeProperty ;
+          rdfs:domain :Aluno ;
+          rdfs:range xsd:dateTime .
+
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#designacao
+:designacao rdf:type owl:DatatypeProperty ;
+            rdfs:domain :Curso ;
+            rdfs:range xsd:string .
+
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#duracao
+:duracao rdf:type owl:DatatypeProperty ;
+         rdfs:domain :Curso ;
+         rdfs:range xsd:int .
+
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#instrumentoId
+:instrumentoId rdf:type owl:DatatypeProperty ;
+               rdfs:domain :Instrumento ;
+               rdfs:range xsd:string .
+
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#nome
+:nome rdf:type owl:DatatypeProperty ;
+      rdfs:domain :Aluno ;
+      rdfs:range xsd:string .
+
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#text
+:text rdf:type owl:DatatypeProperty ;
+      rdfs:domain :Instrumento ;
+      rdfs:range xsd:string .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#Aluno
+:Aluno rdf:type owl:Class .
+
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#Curso
+:Curso rdf:type owl:Class .
+
+
+###  http://rpcw.di.uminho.pt/2024/escola-de-musica#Instrumento
+:Instrumento rdf:type owl:Class .
+
+
