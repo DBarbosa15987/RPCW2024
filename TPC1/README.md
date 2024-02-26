@@ -3,7 +3,7 @@
 ## Utilização
 
 * python json_to_ttl.py <outputFile.owl>
-* o argumento do ficheiro de output é facultativo, se não fôr introduzido, é usado "ontology_plantas_output.owl"
+* o argumento do ficheiro de output é facultativo, se não for introduzido, é usado "ontology_plantas_output.owl"
 
 ## Descrição
 
@@ -12,7 +12,7 @@ O script faz o povoamento de uma ontologia ttl préviamente definida a partir do
 ## Metodologia
 
 ### Criação da ontologia
-A partir da dos dados JSON foi cridada uma ontologia que representasse os dados, as suas relações e as suas propriedades.\
+A partir dos dados JSON foi cridada uma ontologia que representasse os dados, as suas relações e as suas propriedades.\
 Em termos de classes e propriedades dos dados a ontologia tem a seguinte constituição:
 
 * **Entidade**
@@ -53,7 +53,7 @@ As propiedades dos objetos listam-se abaixo:
 Foram detetadas várias inconsistências e erros nos dados fornecidos.\
 Foi por isso necessária uma análise e e tratamento dos dados.
 
-Este exemplo ilustra alguns dos tipo de erros econtrados:
+Este exemplo ilustra alguns dos tipos de erros econtrados:
 
 ```json
   {
