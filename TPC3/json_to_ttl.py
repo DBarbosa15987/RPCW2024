@@ -39,7 +39,7 @@ for cidade in bd["cidades"]:
       :distrito "{cidade['distrito']}"^^xsd:string ;
       :idCidade "{cidadeId}"^^xsd:string;
       :nome "{cidade['nome']}"^^xsd:string ;
-      :populacao "{int(cidade['população'])}"^^xsd:int .
+      :populacao "{cidade['população']}"^^xsd:float .
 
 
 """
