@@ -1,19 +1,15 @@
+from concurrent.futures import ThreadPoolExecutor
 import requests
 import json
-import sys
-
-"""
-Queries para responder:
-    Que filmes são curtas metragens?
-    Que filmes de ação tenho no dataset?
-    Qual o elenco do filme X?
-    Em que filmes atuou o ator Y?
-"""
+import threading
 
 # Query headers + endpoint + dbLimit
 headers = {"Accept": "application/sparql-results+json"}
 sparqlEndpoint = "http://dbpedia.org/sparql"
 dbpediaLimit = 10000
+
+# Lock for appending json output files
+wLock = threading.Lock()
 
 def getQuery(type,offset=0,film=None,actor=None):
 
@@ -24,6 +20,7 @@ def getQuery(type,offset=0,film=None,actor=None):
 """
 
     match type:
+
         case "films":
             query += f"""
     SELECT *
@@ -31,60 +28,91 @@ def getQuery(type,offset=0,film=None,actor=None):
     {{
     ?film a dbo:Film.
     ?film rdfs:label ?label.
-    filter(langMatches(lang(?filmAbstract), "en") && langMatches(lang(?label), "en")).
     ?film dbp:name ?filmName.
     ?film dbo:abstract ?filmAbstract.
+    filter(langMatches(lang(?filmAbstract), "en") && langMatches(lang(?label), "en")).
     optional{{?film dbo:runtime ?runtime}}
     }} OFFSET {offset}
     LIMIT {dbpediaLimit}
     """
-            
-        case "directors":
+                    
+        case "updateFilms":
             query += f"""
-    SELECT DISTINCT ?director
-    WHERE
-    {{
-        {{<{film}> dbp:director ?director.}} 
-        UNION
-        {{<{film}> dbo:director ?director.}}
+    SELECT ?actor ?director ?musicComposer ?producer ?writer ?cinematographer WHERE {{
+    {{ SELECT DISTINCT ?director WHERE {{
+        <{film}> dbo:director ?director.
+        FILTER(isURI(?director))
+        }}
     }}
-    """
-            
-        case "actors":
-            query += f"""
-    SELECT DISTINCT ?actor
-    WHERE
-    {{
-        {{<{film}> dbp:starring ?actor.}}
-        UNION
-        {{<{film}> dbo:starring ?actor.}}
+    UNION
+    {{ SELECT DISTINCT ?actor WHERE {{
+        <{film}> dbo:starring ?actor.
+        FILTER(isURI(?actor))
+        }}
     }}
-    """
-            
-        case "actorFilms":
-            query += f"""
-    SELECT DISTINCT ?film ?name
-    WHERE
-    {{
-        {{?film dbp:starring <{actor}>.}}
-        UNION
-        {{?film dbo:starring <{actor}>.}}
+    UNION
+    {{ SELECT DISTINCT ?musicComposer WHERE {{
+        <{film}> dbo:musicComposer ?musicComposer.
+        FILTER(isURI(?musicComposer))
+        }}
     }}
+    UNION
+    {{ SELECT DISTINCT ?producer WHERE {{
+        <{film}> dbo:producer ?producer.
+        FILTER(isURI(?producer))
+        }}
+    }}
+    UNION
+    {{ SELECT DISTINCT ?writer WHERE {{
+        <{film}> dbo:writer ?writer.
+        FILTER(isURI(?writer))
+        }}
+    }}
+    UNION
+    {{ SELECT DISTINCT ?cinematographer WHERE {{
+        <{film}> dbo:cinematography ?cinematographer.
+        FILTER(isURI(?cinematographer))
+        }}
+    }}
+}}
 """
 
-        case "actorName":
+        case "actors":
             query += f"""
-    SELECT distinct ?name
-    WHERE
+    SELECT ?role ?name ?description ?birthDate WHERE {{
     {{
-        {{optional  {{<{actor}> dbp:birthName ?name.}}}}
-        UNION
-        {{optional {{<{actor}> dbp:birthName ?name.}}}}
-        UNION
-        {{optional {{<{actor}> dbp:name ?name.}}}}
-
+        SELECT ?name WHERE {{
+            {{<{actor}> dbo:birthName ?name.}}
+            UNION
+            {{<{actor}> dbp:birthName ?name.}}
+            UNION
+            {{<{actor}> dbp:name ?name.}}
+            UNION
+            {{<{actor}> rdfs:label ?name.}}
+        }} LIMIT 1
     }}
-""" 
+    UNION
+    {{
+        SELECT DISTINCT ?role WHERE {{
+            ?role dbo:starring <{actor}>.
+            FILTER(isURI(?role))
+        }}
+    }}
+    UNION
+    {{
+        SELECT ?description WHERE {{
+            <{actor}> dbo:abstract ?description.
+            filter(langMatches(lang(?description), "en"))
+        }}
+    }}
+    UNION
+    {{
+        SELECT ?birthDate WHERE {{
+            <http://dbpedia.org/resource/Sandalu_Thalen_Eha> dbo:birthDate ?birthDate.
+        }}
+    }}
+}}
+"""
 
     return query
 
@@ -116,7 +144,7 @@ def createFilmsJson():
             
             for result in resultList:
                 film_IRI = result["film"]["value"]
-                film_name = result["filmName"]["value"]
+                film_name = result["label"]["value"]
                 film_abstract = result["filmAbstract"]["value"]
                 runtime = None
                 if "runtime" in result:
@@ -124,7 +152,7 @@ def createFilmsJson():
                     
 
                 filmList.append({
-                    "iri":film_IRI,
+                    "iri": film_IRI,
                     "nome": film_name,
                     "abstract": film_abstract,
                     "runtime" : runtime
@@ -138,180 +166,162 @@ def createFilmsJson():
         pages += 1
         print(f"page {pages},pageSize {pageSize}, offset {offset}")
 
-        # FIXME vai ficar assim até ser resolvido, apenas com uma página
-        # break
-
-
-
     print(len(filmList))
     outputFile = open("json/films.json", "w") 
-    json.dump(filmList, outputFile, ensure_ascii=False)
+    json.dump(filmList, outputFile, ensure_ascii=False,indent=4)
     outputFile.close()
 
 
 def completeFilms():
-
     inputFile = open("json/films.json", "r")
     data = json.load(inputFile)
-    fullActorList = set()
+    inputFile.close()
+
+    fullActorSet = set()
     filmList = []
-    i = 0
-
-    for film in data:
-        i+=1
-        print(f"completeFilms {i}")
-
-        newFilm = film
-
-        filmiri = film["iri"]
-
-        queryDirectors = getQuery(type="directors",film=filmiri)
-        queryActors = getQuery(type="actors",film=filmiri)
-
-        # Directors
-        params = {
-            "query": queryDirectors,
-            "format": "json"
-        }
-
-        directorList = []
-
-        response = requests.get(sparqlEndpoint, params=params, headers=headers)
-        if response.status_code == 200:
-
-            results = response.json()
-            for result in results["results"]["bindings"]:
-                
-                actor = None
-                if "director" in result:
-                    actor = result["director"]
-                    if actor["type"] == "uri":
-                        directorList.append(actor["value"])
-                
-
-        else:
-            print("Error in directors:", response.status_code)
-            print(response.text)
-
-        newFilm["directors"] = directorList
-
-
-        # Actors
-        params = {
-            "query": queryActors,
-            "format": "json"
-        }
-
-
-        actorList = []
-
-        response = requests.get(sparqlEndpoint, params=params, headers=headers)
-        if response.status_code == 200:
-
-            results = response.json()
-            for result in results["results"]["bindings"]:
-                
-                actor = None
-                if "actor" in result:
-                    actor = result["actor"]
-                    if actor["type"] == "uri":
-                        actorList.append(actor["value"])
-                        fullActorList.add(actor["value"])
-                
-
-        else:
-            print("Error in actors:", response.status_code)
-            print(response.text)
-
-        newFilm["actors"] = actorList
-        
-        filmList.append(newFilm)
-
-    outputFile = open("json/updatedFilms.json", "w") 
-    json.dump(filmList, outputFile, ensure_ascii=False)
-    outputFile.close()
-
-    return list(fullActorList)
-
-
-def createActorJson(fullActorList):
     
     i = 0
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = []
+        for film in data:
+            filmiri = film["iri"]
+            future = executor.submit(process_film, filmiri, fullActorSet, filmList,film,i)
+            futures.append(future)
+            i+=1
+        for future in futures:
+            future.result()
 
-    actorList = []
-
-    for actor in fullActorList:
-
-        print(f"createActorJson {i}")
-        i+=1
-
-        actorName = ""
-
-        actorNamequery = getQuery(type="actorName",actor=actor)
-
-        # Actors
-        params = {
-            "query": actorNamequery,
-            "format": "json"
-        }
-
-        response = requests.get(sparqlEndpoint, params=params, headers=headers)
-        if response.status_code == 200:
-
-            results = response.json()
-            if len(results["results"]["bindings"])>0:
-                result = results["results"]["bindings"][0]
-                if "name" in result:
-                    actorName = result["name"]["value"]          
-
-        else:
-            print("Error in actorsFilms:", response.status_code)
-            print(response.text)
-
-
-        actorFilmsquery = getQuery(type="actorFilms",actor=actor)
-
-        # Actors
-        params = {
-            "query": actorFilmsquery,
-            "format": "json"
-        }
-
-
-        filmList = []
-
-        response = requests.get(sparqlEndpoint, params=params, headers=headers)
-        if response.status_code == 200:
-
-            results = response.json()
-            for result in results["results"]["bindings"]:
-                
-                films = None
-                if "film" in result:
-                    films = result["film"]
-                    if films["type"] == "uri":
-                        filmList.append(films["value"])            
-
-        else:
-            print("Error in actorFilms:", response.status_code)
-            print(response.text)
-
-        actorList.append({
-            "uri" : actor,
-            "name" : actorName,
-            "films" : filmList
-        })
-
-    outputFile = open("json/actors.json", "w") 
-    json.dump(actorList, outputFile, ensure_ascii=False)
+    outputFile = open("json/updatedFilms.json", "w")
+    json.dump(filmList, outputFile, ensure_ascii=False,indent=4)
     outputFile.close()
 
+    fullActorList = list(fullActorSet)
+    outputFile = open("json/actorList.json", "w")
+    json.dump(fullActorList, outputFile, ensure_ascii=False,indent=4)
+    outputFile.close()
+
+
+def process_film(filmiri, fullActorSet, filmList,film,i):
+
+    query = getQuery(type="updateFilms", film=filmiri)
+    params = {"query": query, "format": "json"}
+    response = requests.get(sparqlEndpoint, params=params, headers=headers)
+
+    actors = []
+    directors = []
+    musicComposers = []
+    producers = []
+    writers = []
+    cinematographers = []
+
+
+    if response.status_code == 200:
+        
+        results = response.json()
+        for result in results["results"]["bindings"]:
+            actor = result.get("actor")
+            director = result.get("director")
+            musicComposer = result.get("musicComposer")
+            producer = result.get("producer")
+            writer = result.get("writer")
+            cinematographer = result.get("cinematographer")
+            
+            if actor:
+                actors.append(actor["value"])
+            if director:
+                directors.append(director["value"])
+            if musicComposer:
+                musicComposers.append(musicComposer["value"])
+            if producer:
+                producers.append(producer["value"])
+            if writer:
+                writers.append(writer["value"])
+            if cinematographer:
+                cinematographers.append(cinematographer["value"])
+            
+    newfilm = film
+
+    newfilm["iri"] = filmiri
+    newfilm["actors"] = actors
+    newfilm["directors"] = directors
+    newfilm["musicComposers"] = musicComposers
+    newfilm["producers"] = producers
+    newfilm["writers"] = writers
+    newfilm["cinematographers"] = cinematographers
+
+    with wLock:
+        filmList.append(newfilm)
+        for actor in actors:
+            fullActorSet.add(actor)
+
+    print(f"Finish thread {i}")
+
+
+def createActorJson():
+    
+    inputFile = open("json/actorList.json", "r")
+    data = json.load(inputFile)
+    inputFile.close()
+
+    i = 0
+    actorList = []
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = []
+        for actorIri in data:
+            future = executor.submit(process_actor, actorIri, actorList,i)
+            futures.append(future)
+            i+=1
+        for future in futures:
+            future.result()
+
+
+    outputFile = open("json/actors.json", "w")
+    json.dump(actorList, outputFile, ensure_ascii=False,indent=4)
+    outputFile.close()
+
+
+def process_actor(actorIri, actorList,i):
+
+    query = getQuery(type="actors",actor=actorIri)
+    params = {"query": query, "format": "json"}
+    response = requests.get(sparqlEndpoint, params=params, headers=headers)
+
+    finalName = ""
+    roles = []
+    finalDescription = ""
+
+    if response.status_code == 200:
+        
+        results = response.json()
+        for result in results["results"]["bindings"]:
+            name = result.get("name")
+            role = result.get("role")
+            description = result.get("description")
+            
+            if name:
+                finalName = name["value"]
+            if role:
+                roles.append(role["value"])
+            if description:
+                finalDescription = description["value"]
+
+    actor = {}
+    actor["iri"] = actorIri
+    actor["name"] = finalName
+    actor["roles"] = roles
+    actor["description"] = finalDescription
+
+    with wLock:
+        actorList.append(actor)
+
+    print(f"Finish thread {i}")
 
 
 def main():
     createFilmsJson()
-    #fullActorList = completeFilms()
-    #createActorJson(fullActorList)
+    completeFilms()
+    createActorJson()
     pass
 
 
