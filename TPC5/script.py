@@ -11,7 +11,7 @@ dbpediaLimit = 10000
 # Lock for appending json output files
 wLock = threading.Lock()
 
-def getQuery(type,offset=0,film=None,actor=None):
+def getQuery(type,offset=0,film=None,rel=None):
 
     query = """
     PREFIX dbo: <http://dbpedia.org/ontology/>
@@ -23,22 +23,23 @@ def getQuery(type,offset=0,film=None,actor=None):
 
         case "films":
             query += f"""
-    SELECT *
-    WHERE
-    {{
+    SELECT * WHERE {{
     ?film a dbo:Film.
     ?film rdfs:label ?label.
     ?film dbp:name ?filmName.
     ?film dbo:abstract ?filmAbstract.
     filter(langMatches(lang(?filmAbstract), "en") && langMatches(lang(?label), "en")).
     optional{{?film dbo:runtime ?runtime}}
+    optional{{?film dbo:releaseDate ?releaseDate.
+    filter (datatype(?releaseDate) = xsd:date)}}
+    
     }} OFFSET {offset}
     LIMIT {dbpediaLimit}
     """
                     
         case "updateFilms":
             query += f"""
-    SELECT ?actor ?director ?musicComposer ?producer ?writer ?cinematographer WHERE {{
+    SELECT ?actor ?director ?musicComposer ?producer ?writer ?cinematographer ?releaseDate WHERE {{
     {{ SELECT DISTINCT ?director WHERE {{
         <{film}> dbo:director ?director.
         FILTER(isURI(?director))
@@ -77,41 +78,20 @@ def getQuery(type,offset=0,film=None,actor=None):
 }}
 """
 
-        case "actors":
+        case "person":
             query += f"""
-    SELECT ?role ?name ?description ?birthDate WHERE {{
-    {{
-        SELECT ?name WHERE {{
-            {{<{actor}> dbo:birthName ?name.}}
-            UNION
-            {{<{actor}> dbp:birthName ?name.}}
-            UNION
-            {{<{actor}> dbp:name ?name.}}
-            UNION
-            {{<{actor}> rdfs:label ?name.}}
-        }} LIMIT 1
-    }}
-    UNION
-    {{
-        SELECT DISTINCT ?role WHERE {{
-            ?role dbo:starring <{actor}>.
-            FILTER(isURI(?role))
-        }}
-    }}
-    UNION
-    {{
-        SELECT ?description WHERE {{
-            <{actor}> dbo:abstract ?description.
-            filter(langMatches(lang(?description), "en"))
-        }}
-    }}
-    UNION
-    {{
-        SELECT ?birthDate WHERE {{
-            <http://dbpedia.org/resource/Sandalu_Thalen_Eha> dbo:birthDate ?birthDate.
-        }}
-    }}
-}}
+    SELECT DISTINCT ?person ?name ?bd ?description WHERE {{
+        ?film a dbo:Film.
+        ?film dbo:{rel} ?person.
+        optional{{?person foaf:name ?name.
+        filter(langMatches(lang(?name), "en"))}}
+        optional{{?person dbo:birthDate ?bd.}}
+        optional{{?person dbo:abstract ?description.
+        filter(langMatches(lang(?description), "en")).}}
+        
+
+}} OFFSET {offset}
+LIMIT {dbpediaLimit}
 """
 
     return query
@@ -143,19 +123,26 @@ def createFilmsJson():
             
             
             for result in resultList:
-                film_IRI = result["film"]["value"]
+                filmUri = result["film"]["value"]
                 film_name = result["label"]["value"]
                 film_abstract = result["filmAbstract"]["value"]
-                runtime = None
-                if "runtime" in result:
-                    runtime = result["runtime"]["value"]
-                    
+                
+                # Can be null
+                releaseDate = result.get("releaseDate")
+                runtime = result.get("runtime")
+                
+                if releaseDate:
+                    releaseDate = releaseDate["value"]
+                if runtime:
+                    runtime = runtime["value"]
+
 
                 filmList.append({
-                    "iri": film_IRI,
+                    "uri": filmUri,
                     "nome": film_name,
                     "abstract": film_abstract,
-                    "runtime" : runtime
+                    "runtime" : runtime,
+                    "releaseDate" : releaseDate
                 })
 
         else:
@@ -166,7 +153,6 @@ def createFilmsJson():
         pages += 1
         print(f"page {pages},pageSize {pageSize}, offset {offset}")
 
-    print(len(filmList))
     outputFile = open("json/films.json", "w") 
     json.dump(filmList, outputFile, ensure_ascii=False,indent=4)
     outputFile.close()
@@ -177,15 +163,14 @@ def completeFilms():
     data = json.load(inputFile)
     inputFile.close()
 
-    fullActorSet = set()
     filmList = []
     
     i = 0
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=12) as executor:
         futures = []
         for film in data:
-            filmiri = film["iri"]
-            future = executor.submit(process_film, filmiri, fullActorSet, filmList,film,i)
+            filmUri = film["uri"]
+            future = executor.submit(process_film, filmUri, filmList,film,i)
             futures.append(future)
             i+=1
         for future in futures:
@@ -195,15 +180,10 @@ def completeFilms():
     json.dump(filmList, outputFile, ensure_ascii=False,indent=4)
     outputFile.close()
 
-    fullActorList = list(fullActorSet)
-    outputFile = open("json/actorList.json", "w")
-    json.dump(fullActorList, outputFile, ensure_ascii=False,indent=4)
-    outputFile.close()
 
+def process_film(filmUri, filmList,film,i):
 
-def process_film(filmiri, fullActorSet, filmList,film,i):
-
-    query = getQuery(type="updateFilms", film=filmiri)
+    query = getQuery(type="updateFilms", film=filmUri)
     params = {"query": query, "format": "json"}
     response = requests.get(sparqlEndpoint, params=params, headers=headers)
 
@@ -240,8 +220,7 @@ def process_film(filmiri, fullActorSet, filmList,film,i):
                 cinematographers.append(cinematographer["value"])
             
     newfilm = film
-
-    newfilm["iri"] = filmiri
+    newfilm["uri"] = filmUri
     newfilm["actors"] = actors
     newfilm["directors"] = directors
     newfilm["musicComposers"] = musicComposers
@@ -251,78 +230,100 @@ def process_film(filmiri, fullActorSet, filmList,film,i):
 
     with wLock:
         filmList.append(newfilm)
-        for actor in actors:
-            fullActorSet.add(actor)
 
     print(f"Finish thread {i}")
 
 
 def createActorJson():
     
-    inputFile = open("json/actorList.json", "r")
-    data = json.load(inputFile)
-    inputFile.close()
+    people = {
+        "actors":  [],
+        "directors": [],
+        "musicComposers": [],
+        "producers": [],
+        "writers": [],
+        "cinematographers": []
+    }
 
-    i = 0
-    actorList = []
+    rel = {
+        "actors": "starring",
+        "directors": "director",
+        "musicComposers": "musicComposer",
+        "producers": "producer",
+        "writers": "writer",
+        "cinematographers": "cinematography"
+}
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = []
-        for actorIri in data:
-            future = executor.submit(process_actor, actorIri, actorList,i)
-            futures.append(future)
-            i+=1
-        for future in futures:
-            future.result()
+    for personType in people.keys():
+
+        offset = 0
+        pageSize = dbpediaLimit
+        pages = 0
+        personList = []
+
+        # Leaves cicle when the page doesn't come full
+        while dbpediaLimit==pageSize:
+
+            query = getQuery(type="person",offset=offset,rel=rel[personType])
+
+            params = {
+            "query": query,
+            "format": "json"
+            }
+
+            response = requests.get(sparqlEndpoint, params=params, headers=headers)
+
+            if response.status_code == 200:
+                results = response.json()
+                resultList = results["results"]["bindings"]
+                pageSize = len(resultList)
+
+                newPerson = {}
+
+                for result in resultList:
+
+                    person = result.get("person")
+                    name = result.get("name")
+                    bd = result.get("bd")
+                    description = result.get("description")
+
+                    if person:
+                        person = person["value"]
+                    if name:
+                        name = name["value"]
+                    if bd:
+                        bd = bd["value"]
+                    if description:
+                        description = description["value"]
+
+                    newPerson = {
+                        "person": person,
+                        "name": name,
+                        "birthDate": bd,
+                        "description": description
+                    }
+                    
+                    personList.append(newPerson)
 
 
-    outputFile = open("json/actors.json", "w")
-    json.dump(actorList, outputFile, ensure_ascii=False,indent=4)
+            else:
+                print("Error:", response.status_code)
+                print(response.text)
+
+            offset += dbpediaLimit
+            pages += 1
+            print(f"page {pages},pageSize {pageSize}, offset {offset}, person {personType}")
+
+        people[personType] = personList
+
+    outputFile = open("json/people.json", "w") 
+    json.dump(people, outputFile, ensure_ascii=False,indent=4)
     outputFile.close()
-
-
-def process_actor(actorIri, actorList,i):
-
-    query = getQuery(type="actors",actor=actorIri)
-    params = {"query": query, "format": "json"}
-    response = requests.get(sparqlEndpoint, params=params, headers=headers)
-
-    finalName = ""
-    roles = []
-    finalDescription = ""
-
-    if response.status_code == 200:
-        
-        results = response.json()
-        for result in results["results"]["bindings"]:
-            name = result.get("name")
-            role = result.get("role")
-            description = result.get("description")
-            
-            if name:
-                finalName = name["value"]
-            if role:
-                roles.append(role["value"])
-            if description:
-                finalDescription = description["value"]
-
-    actor = {}
-    actor["iri"] = actorIri
-    actor["name"] = finalName
-    actor["roles"] = roles
-    actor["description"] = finalDescription
-
-    with wLock:
-        actorList.append(actor)
-
-    print(f"Finish thread {i}")
-
 
 def main():
     createFilmsJson()
     completeFilms()
     createActorJson()
-    pass
 
 
 if __name__ == '__main__':
