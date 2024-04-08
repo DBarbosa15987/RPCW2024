@@ -44,10 +44,10 @@ Ex:
 {
     "actors": [
         {
-            "uri": "uri",
-            "nome": "nome",
-            "descrição": "descrição",
-            "data de nascimento": "data de nascimento"
+            "person": "person",
+            "name": "name",
+            "birthDate": "birthDate",
+            "description": "description"
         }
     ],
     "directors": [],
