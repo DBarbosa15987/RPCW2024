@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cinema: Actor </title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/w3.css') }}" />
+</head>
+
+<body>
+    <div class="w3-card-4">
+
+        <header class="w3-container w3-purple">
+            <h1>Cinema: Actor </h1>
+        </header>
+
+        <div class="name">
+            {% if "name" in data.base %}
+            <h2>{{ data.base.name.value }}</h2>
+            {% else %}
+            <h2>No Name available.</h2>
+            {% endif %}
+        </div>
+
+        <div class="description">
+            {% if "description" in data.base %}
+            <p>{{ data.base.description.value }}</p>
+            {% else %}
+            <p>No description available.</p>
+            {% endif %}
+        </div>
+
+        <div class="films">
+            <h2>Films Participated</h2>
+            <table class="w3-table-all">
+                <tr>
+                    <th>Title</th>
+                    <th>Release Date</th>
+                    <th>Duration</th>
+                    <th>Description</th>
+                    <th>Source</th>
+                </tr>
+                {% for film in data.films %}
+                <tr>
+                    {%if "title" in film %}
+                    <td onclick="window.location='{{ "/film/" + film.filmUri }}';" style="cursor:pointer;" >{{ film.title.value }}</td>
+                    {%else%}
+                    <td onclick="window.location='{{ "/film/" + film.filmUri }}';" style="cursor:pointer;" >-</td>
+                    {%endif%}
+                    {%if "releaseDate" in film %}
+                    <td onclick="window.location='{{ "/film/" + film.filmUri }}';" style="cursor:pointer;" >{{ film.releaseDate.value }}</td>
+                    {%else%}
+                    <td onclick="window.location='{{ "/film/" + film.filmUri }}';" style="cursor:pointer;" >-</td>
+                    {%endif%}
+                    {%if "duration" in film %}
+                    <td onclick="window.location='{{ "/film/" + film.filmUri }}';" style="cursor:pointer;" >{{ film.duration.value }}</td>
+                    {%else%}
+                    <td onclick="window.location='{{ "/film/" + film.filmUri }}';" style="cursor:pointer;" >-</td>
+                    {%endif%}
+                    {%if "filmDescription" in film %}
+                    <td onclick="window.location='{{ "/film/" + film.filmUri }}';" style="cursor:pointer;" >{{ film.filmDescription.value }}</td>
+                    {%else%}
+                    <td onclick="window.location='{{ "/film/" + film.filmUri }}';" style="cursor:pointer;" >-</td>
+                    {%endif%}
+                    
+                    <td><a href={{ data.source + film.filmUri }}>{{ data.source + film.filmUri }}</a></td>
+                    
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <footer class="w3-container w3-purple">
+            <address>Source: <a href={{data.base.source.value}}>{{data.base.source.value}}</a> :: [<a href="/actors">Return</a>]</address>
+        </footer>
+    </div>
+</body>
+
+</html>

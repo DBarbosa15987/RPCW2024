@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cinema: Film </title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/w3.css') }}" />
+</head>
+
+<body>
+    <div class="w3-card-4">
+
+        <header class="w3-container w3-purple">
+            <h1>Cinema: Film </h1>
+        </header>
+
+        <div class="title">
+            {% if "title" in data.base %}
+            <h2>{{ data.base.title.value }}</h2>
+            {% else %}
+            <h2>No Title available.</h2>
+            {% endif %}
+        </div>
+
+        <div class="description">
+            {% if "filmDescription" in data.base %}
+            <p>{{ data.base.filmDescription.value }}</p>
+            {% else %}
+            <p>No description available.</p>
+            {% endif %}
+        </div>
+
+        {%for personType,personData in data.people.items()%}
+            <div class="films">
+                <h2>{{personType}}</h2>
+                <table class="w3-table-all">
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Birth Date</th>
+                        <th>Source</th>
+                    </tr>
+                    {%for people in personData%}
+                        {% if "name" in people %}
+                        <tr>
+                        <td onclick="window.location='{{ "/actor/" + people.personUri.value }}';" style="cursor:pointer;">{{ people.name.value }}</td>
+                        {% else %}
+                        <td onclick="window.location='{{ "/actor/" + people.personUri.value }}';" style="cursor:pointer;">-</td>
+                        {% endif %}
+                        {% if "description" in people %}
+                        <td onclick="window.location='{{ "/actor/" + people.personUri.value }}';" style="cursor:pointer;">{{ people.description.value }}</td>
+                        {% else %}
+                        <td onclick="window.location='{{ "/actor/" + people.personUri.value }}';" style="cursor:pointer;">-</td>
+                        {% endif %}
+                        {% if "birthDate" in people %}
+                        <td onclick="window.location='{{ "/actor/" + people.personUri.value }}';" style="cursor:pointer;">{{ people.birthDate.value }}</td>
+                        {% else %}
+                        <td onclick="window.location='{{ "/actor/" + people.personUri.value }}';" style="cursor:pointer;">-</td>
+                        {% endif %}
+                        <td><a href={{ data.source + people.personUri.value }}>{{ data.source + people.personUri.value }}</a></td>
+                        </tr>
+                    {%endfor%}
+                    </table>
+            </div>
+        {%endfor%}
+        <footer class="w3-container w3-purple">
+            <address>Source: <a href={{data.base.source.value}}>{{data.base.source.value}}</a> :: [<a href="/actors">Return</a>]</address>
+        </footer>
+    </div>
+</body>
+
+</html>
