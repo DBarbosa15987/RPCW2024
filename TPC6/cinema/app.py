@@ -1,21 +1,10 @@
 import urllib.parse
 from flask import Flask, render_template, url_for
 import requests
-from rdflib import Graph
+from rdflib import Graph,URIRef
 from datetime import datetime
 
 app = Flask(__name__)
-# g = Graph()
-# print("parsing...")
-# g.parse("../ontology/cinemaOriginalEx.ttl")
-# print("done")
-
-# query = "select distinct ?Concept where {[] a ?Concept}"
-
-# response = g.query(query)
-# for row in response:
-#     print(row)
-
                                 
 # data do sistema em formato ANSI ISO
 data_hora_atual = datetime.now()
@@ -28,30 +17,14 @@ limit = 100
 
 
 def getUrl(x, page, offset):
-    url = ""
-
-    if x == "films":
-        url = f"/films/{page + offset}"
-    elif x == "actors":
-        url = f"/actors/{page + offset}"
-    return url
+    return f"/{x}/{page + offset}"
 
 
 @app.route('/')
 def index():
     return render_template('index.html', data = {"data": data_iso_formatada})
-# select ?birthDate ?name ?description ?films where{
-#     {optional{:4_Poofs_and_a_Piano :name ?name.}
-#     optional{:4_Poofs_and_a_Piano :birthDate ?birthDate.}
-#     optional{:4_Poofs_and_a_Piano :description ?description.}}
-#     union {:4_Poofs_and_a_Piano :acted ?films}
-# }limit 500
-# <http://dbpedia.org/resource/Phantasm_II>
-# Jim_Varney>
-#sparqlQuery: PREFIX : <http://rpcw.di.uminho.pt/2024/cinema/> 
-#select * where{
-#<http://rpcw.di.uminho.pt/2024/cinema/"Good_Hair"_and_Other_Dubious_Distinctions> a :Film.
-#}
+
+
 @app.route('/films/', defaults={'page': 1})
 @app.route('/films/<int:page>')
 def films(page):
@@ -83,94 +56,6 @@ offset {limit*(page-1)}
             "films": data,
             "page": page
             },getUrl=getUrl)
-    else:
-        return render_template('empty.html')
-
-
-@app.route('/actors/', defaults={'page': 1})
-@app.route('/actors/<int:page>')
-def actors(page):
-
-    sparqlQuery = f"""
-
-PREFIX : <{prefix}>
-
-select ?actor ?birthDate ?name ?description where{{
-    ?actor a :Actor.
-    optional{{?actor :name ?name.}}
-    optional{{?actor :birthDate ?birthDate.}}
-    optional{{?actor :description ?description.}}
-}}limit {limit}
-offset {limit*(page-1)}
-"""
-
-    payload = {"query": sparqlQuery}
-
-    response = requests.get(graphdb_endpoint, params=payload,
-        headers = {'Accept': 'application/sparql-results+json'}
-    )
-    if response.status_code == 200:
-        data = response.json()["results"]["bindings"]
-        for i,entry in enumerate(data):
-            data[i]["uri"] = entry["actor"]["value"].split("/")[-1]
-        return render_template('actors.html', data={
-            "actors": data,
-            "page": page
-            },getUrl=getUrl)
-    else:
-        return render_template('empty.html')
-
-
-@app.route('/actor/<string:uri>')
-def actor(uri):
-
-    if '"' in uri:
-        uri = urllib.parse.quote(uri, safe='')
-
-    sparqlQuery = f"""
-
-PREFIX : <{prefix}>
-
-select * where{{
-    
-    <{prefix+uri}> a :Actor.
-    {{
-        BIND("http://dbpedia.org/resource/{uri}" AS ?source)
-        optional{{<{prefix+uri}> :name ?name.}}
-        optional{{<{prefix+uri}> :birthDate ?birthDate.}}
-        optional{{<{prefix+uri}> :description ?description.}}
-    }}
-    union {{ 
-        select * where{{
-            <{prefix+uri}> :acted ?filmUri.
-            optional{{?filmUri :title ?title.}}
-            optional{{?filmUri :description ?filmDescription.}}
-            optional{{?filmUri :duration ?duration.}}
-            optional{{?filmUri :releaseDate ?releaseDate.}}
-        }}
-    }}
-}}
-
-"""
-
-    payload = {"query": sparqlQuery}
-
-    response = requests.get(graphdb_endpoint, params=payload,
-        headers = {'Accept': 'application/sparql-results+json'}
-    )
-    if response.status_code == 200:
-        data = response.json()["results"]["bindings"]
-        base = data[0]
-        films = data[1:]
-        for i,entry in enumerate(films):
-            films[i]["filmUri"] = entry["filmUri"]["value"].split("/")[-1]
-
-
-        return render_template('actor.html', data={
-            "base" : base,
-            "films": films,
-            "source": "http://dbpedia.org/resource/"
-            })
     else:
         return render_template('empty.html')
 
@@ -262,6 +147,230 @@ select * where{{
         return render_template('film.html', data=cleanData)
     else:
         return render_template('empty.html',data={"response" :response,"sparqlQuery" :sparqlQuery})
+
+
+@app.route('/actors/', defaults={'page': 1})
+@app.route('/actors/<int:page>')
+def actors(page):
+
+    return getPersonsPage("actors",page)
+
+
+@app.route('/actor/<string:uri>')
+def actor(uri):
+
+    return getPersonPage("actors",uri)
+
+
+@app.route('/directors/', defaults={'page': 1})
+@app.route('/directors/<int:page>')
+def directors(page):
+
+    return getPersonsPage("directors",page)
+
+@app.route('/director/<string:uri>')
+def director(uri):
+
+    return getPersonPage("directors",uri)
+
+
+
+@app.route('/musicComposers/', defaults={'page': 1})
+@app.route('/musicComposers/<int:page>')
+def musicComposers(page):
+
+    return getPersonsPage("musicComposers",page)
+
+@app.route('/musicComposer/<string:uri>')
+def musicComposer(uri):
+
+    return getPersonPage("musicComposers",uri)
+
+
+
+@app.route('/producers/', defaults={'page': 1})
+@app.route('/producers/<int:page>')
+def producers(page):
+
+    return getPersonsPage("producers",page)
+
+
+@app.route('/producer/<string:uri>')
+def producer(uri):
+
+    return getPersonPage("producers",uri)
+
+
+@app.route('/writers/', defaults={'page': 1})
+@app.route('/writers/<int:page>')
+def writers(page):
+
+    return getPersonsPage("writers",page)
+
+
+@app.route('/writer/<string:uri>')
+def writer(uri):
+
+    return getPersonPage("writers",uri)
+
+
+def getPersonsPage(personType,page):
+
+    variable = ""
+    html = ""
+    type = ""
+
+    match personType:
+
+        case "actors":
+            variable = "actor"
+            type = "Actor"
+            html = "actors"
+
+        case "directors":
+            variable = "director"
+            type = "Director"
+            html = "directors"
+        case "musicComposers":
+            variable = "musicComposer"
+            type = "MusicComposer"
+            html = "musicComposers"
+        case "producers":
+            variable = "producer"
+            type = "Producer"
+            html = "producers"
+            
+        case "writers":
+            variable = "writer"
+            type = "Writer"
+            html = "writers"
+
+
+    sparqlQuery = f"""
+
+PREFIX : <{prefix}>
+
+select ?{variable} ?birthDate ?name ?description where{{
+    ?{variable} a :{type}.
+    optional{{?{variable} :name ?name.}}
+    optional{{?{variable} :birthDate ?birthDate.}}
+    optional{{?{variable} :description ?description.}}
+}}limit {limit}
+offset {limit*(page-1)}
+"""
+
+    payload = {"query": sparqlQuery}
+
+    response = requests.get(graphdb_endpoint, params=payload,
+        headers = {'Accept': 'application/sparql-results+json'}
+    )
+    if response.status_code == 200:
+        data = response.json()["results"]["bindings"]
+        
+        if len(data)>0:
+            for i,entry in enumerate(data):
+                data[i]["uri"] = entry[variable]["value"].split("/")[-1]
+            template = render_template(f'{html}.html', data={
+                html: data,
+                "page": page
+                },getUrl=getUrl)
+        else:
+            template = render_template("empty.html")
+        return template
+    else:
+        return render_template('empty.html')
+
+
+def getPersonPage(personType,uri):
+    
+    variable = ""
+    type = ""
+    property = ""
+
+    match personType:
+
+        case "actors":
+            variable = "actor"
+            type = "Actor"
+            property = "acted"
+
+        case "directors":
+            variable = "director"
+            type = "Director"
+            property = "directed"
+
+        case "musicComposers":
+            variable = "musicComposer"
+            type = "MusicComposer"
+            property = "composed"
+
+        case "producers":
+            variable = "producer"
+            type = "Producer"
+            property = "produced"
+            
+        case "writers":
+            variable = "writer"
+            type = "Writer"
+            property = "wrote"
+
+
+    if '"' in uri:
+        uri = urllib.parse.quote(uri, safe='')
+
+    fullUri = URIRef(f"{prefix}{uri}")
+
+    sparqlQuery = f"""
+
+PREFIX : <{prefix}>
+
+select * where{{
+    
+    <{fullUri}> a :{type}.
+    {{
+        BIND("http://dbpedia.org/resource/{uri}" AS ?source)
+        optional{{<{fullUri}> :name ?name.}}
+        optional{{<{fullUri}> :birthDate ?birthDate.}}
+        optional{{<{fullUri}> :description ?description.}}
+    }}
+    union {{ 
+        select * where{{
+            <{fullUri}> :{property} ?filmUri.
+            optional{{?filmUri :title ?title.}}
+            optional{{?filmUri :description ?filmDescription.}}
+            optional{{?filmUri :duration ?duration.}}
+            optional{{?filmUri :releaseDate ?releaseDate.}}
+        }}
+    }}
+}}
+
+"""
+
+    payload = {"query": sparqlQuery}
+
+    response = requests.get(graphdb_endpoint, params=payload,
+        headers = {'Accept': 'application/sparql-results+json'}
+    )
+    if response.status_code == 200:
+        data = response.json()["results"]["bindings"]
+        if len(data)>0:
+            base = data[0]
+            films = data[1:]
+            for i,entry in enumerate(films):
+                films[i]["filmUri"] = entry["filmUri"]["value"].split("/")[-1]
+            template = render_template(f'{variable}.html', data={
+            "base" : base,
+            "films": films,
+            "source": "http://dbpedia.org/resource/"
+            })
+
+        else:
+            template = render_template("empty.html",data={"response": f'Empty response, {type} {uri} not found'})
+
+        return template
+
+    else:
+        return render_template('empty.html',data={"response": response})
 
 
 
