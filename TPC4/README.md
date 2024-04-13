@@ -1,5 +1,4 @@
 # Tabela Periódica
-<!-- TODO tem que ter uma instancia de  docker ligado -->
 
 ## Requisitos
 
