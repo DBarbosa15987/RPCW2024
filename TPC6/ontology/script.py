@@ -4,11 +4,6 @@ import json
 import re
 import sys
 
-# 241.58 segundos para os filmes só com as cenas individuais (no total) (regex)
-# 51.66 secs para os actors  (regex)
-# 492.22 secs para tudo
-# 672.62 secs para tudo
-
 g = Graph()
 g.parse("cinema.ttl")
 
@@ -45,7 +40,6 @@ def processFilms():
         runtime = film["runtime"]
         abstract = film["abstract"]
         releaseDate = film["releaseDate"]
-
         
 
         if newFilmUri not in uris:
