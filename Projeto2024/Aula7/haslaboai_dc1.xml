@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='UTF-8'?><?xml-stylesheet href='static/style.xsl' type='text/xsl'?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+    <responseDate>2024-04-24T11:10:51Z</responseDate>
+    <request verb="GetRecord" identifier="oai:repositorium.sdum.uminho.pt:1822/43244" metadataPrefix="oai_dc">https://repositorium.sdum.uminho.pt/oai/oai</request>
+    <GetRecord>
+        <record>
+            <header>
+                <identifier>oai:repositorium.sdum.uminho.pt:1822/43244</identifier>
+                <datestamp>2018-02-21T22:46:21Z</datestamp>
+                <setSpec>com_1822_21291</setSpec>
+                <setSpec>com_1822_12004</setSpec>
+                <setSpec>col_1822_21304</setSpec>
+            </header>
+            <metadata>
+                <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
+                    xmlns:doc="http://www.lyncode.com/xoai"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xmlns:dc="http://purl.org/dc/elements/1.1/" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
+                    <dc:title>Proof theory for hybrid(ised) logics</dc:title>
+                    <dc:creator>Neves, Renato</dc:creator>
+                    <dc:creator>Madeira, Alexandre</dc:creator>
+                    <dc:creator>Martins, Manuel A.</dc:creator>
+                    <dc:creator>Barbosa, L. S.</dc:creator>
+                    <dc:subject>Hybrid logic</dc:subject>
+                    <dc:subject>Decidability</dc:subject>
+                    <dc:subject>Hilbert calculus</dc:subject>
+                    <dc:subject>Completeness</dc:subject>
+                    <dc:subject>Tableau systems</dc:subject>
+                    <dc:subject>Engenharia e Tecnologia::Engenharia Eletrotécnica, Eletrónica e Informática</dc:subject>
+                    <dc:subject>Science &amp; Technology</dc:subject>
+                    <dc:description>Hybridisation is a systematic process along which the characteristic features of hybrid logic, both at the syntactic and the semantic levels, are developed on top of an arbitrary logic framed as an institution. In a series of papers this process has been detailed and taken as a basis for a specification methodology for reconfigurable systems. The present paper extends this work by showing how a proof calculus (in both a Hilbert and a tableau based format) for the hybridised version of a logic can be systematically generated from a proof calculus for the latter. Such developments provide the basis for a complete proof theory for hybrid(ised) logics, and thus pave the way to the development of (dedicated) proof support.</dc:description>
+                    <dc:description>The authors are grateful to Torben Bräuner for helpful, inspiring discussions, and to the anonymous referees for their detailed comments.&#xd;
+This work is funded by ERDF—European Regional Development Fund, through the COMPETE Programme, and by National Funds through Fundação para a Ciência e a Tecnologia(FCT) within project PTDC/EEI-CTP/4836/2014. Moreover, the first and the second authors are sponsored by FCT grants SFRH/BD/52234/2013 and SFRH/BPD/103004/2014, respectively. M. Mar-tins is also supported by the EU FP7 Marie Curie PIRSES-GA-2012-318986 project GeTFun: Generalizing Truth-Functionality and FCT project UID/MAT/04106/2013 through CIDMA. L.Barbosa is further supported by FCT in the context of SFRH/B-SAB/113890/2015.</dc:description>
+                    <dc:date>2016</dc:date>
+                    <dc:type>info:eu-repo/semantics/article</dc:type>
+                    <dc:identifier>Neves, R., Madeira, A., Martins, M. A., &amp; Barbosa, L. S. (2016). Proof theory for hybrid(ised) logics. Science of Computer Programming, 126, 73-93. doi: 10.1016/j.scico.2016.03.001</dc:identifier>
+                    <dc:identifier>0167-6423</dc:identifier>
+                    <dc:identifier>http://hdl.handle.net/1822/43244</dc:identifier>
+                    <dc:identifier>10.1016/j.scico.2016.03.001</dc:identifier>
+                    <dc:language>eng</dc:language>
+                    <dc:relation>PTDC/EEI-CTP/4836/2014</dc:relation>
+                    <dc:relation>SFRH/BD/52234/2013</dc:relation>
+                    <dc:relation>SFRH/BPD/103004/2014</dc:relation>
+                    <dc:relation>info:eu-repo/grantAgreement/EC/FP7/318986/EU</dc:relation>
+                    <dc:relation>info:eu-repo/grantAgreement/FCT/5876/147206/PT</dc:relation>
+                    <dc:relation>SFRH/B-SAB/113890/2015</dc:relation>
+                    <dc:relation>http://www.sciencedirect.com/science/article/pii/S0167642316000691</dc:relation>
+                    <dc:rights>info:eu-repo/semantics/openAccess</dc:rights>
+                    <dc:format>application/pdf</dc:format>
+                    <dc:publisher>Elsevier</dc:publisher>
+                </oai_dc:dc>
+            </metadata>
+        </record>
+    </GetRecord>
+</OAI-PMH>
