@@ -1,3 +1,4 @@
+import glob
 import json
 import os
 import requests
@@ -20,16 +21,18 @@ debugDic={}
 attribSet = set()
 
 contributorCreated = set()
-departmentsCreated = set() #not yet done the counter for :)
+departmentsCreated = set()
 publishersCreated = set()
 subjectsCreated = set()
 journalsCreated = set()
-
+fundEntCreated = set()
+eventCreated = set()
 
 counterContributors = 0
 counterPublisher = 0
 counterJournal = 0
 counterSubject = 0
+counterEvents = 0
 
 def getRToken(xmlString):
     root = ET.fromstring(xmlString)
@@ -65,6 +68,11 @@ def parse_contributors(element, qualifier, authority, confidence, value ,recordU
     if value not in contributorCreated:
         g.add((new_person_uri,RDF.type,OWL.NamedIndividual))
         g.add((new_person_uri,RDF.type,ns.Contributor))
+        g.add((new_person_uri,ns.contributor_name,Literal(value)))
+        if confidence:
+            g.add((new_person_uri,ns.contributor_confidence,Literal(confidence)))
+        if authority:
+            g.add((new_person_uri,ns.contributor_authority, Literal(authority)))
         contributorCreated.add(value)
 
     if qualifier=="author": #add to ontologia na tag certa
@@ -201,23 +209,9 @@ def parse_title(element, qualifier, authority, confidence, value ,recordUri):
 
 def parse_type(element, qualifier, authority, confidence, value ,recordUri):
     g.add((recordUri, ns.record_type, Literal(value)))
-    #if qualifier != None:
-    #    if element not in debugDic:
-    #        a = set()
-    #        a.add(qualifier)
-    #        debugDic[element] = a
-    #    else:
-    #        pass
 
 def parse_peerreviewed(element, qualifier, authority, confidence, value ,recordUri):
     g.add((recordUri, ns.record_peerReviewed, Literal(value)))
-    # if qualifier != None:
-    #     if element not in debugDic:
-    #         a = set()
-    #         a.add(qualifier)
-    #         debugDic[element] = a
-    #     else:
-    #         pass
 
 def parse_journal(element, qualifier, authority, confidence, value ,recordUri):
     
@@ -240,14 +234,50 @@ def parse_journal(element, qualifier, authority, confidence, value ,recordUri):
 
 #def parse_citation_endp(element, qualifier, authority, confidence, value ,recordUri)
 
-def  parse_publicationStatus(element, qualifier, authority, confidence, value ,recordUri):
+def parse_publicationStatus(element, qualifier, authority, confidence, value ,recordUri):
     g.add((recordUri, ns.record_publicationStatus, Literal(value)))
 
 
+def parse_citation_endp(element, qualifier, authority, confidence, value ,recordUri):
+    g.add((recordUri, ns.record_endPage, Literal(value)))
 
+def parse_citation_conf(element, qualifier, authority, confidence, value ,recordUri):
+    g.add((recordUri, ns.citation_conferencePlace, Literal(value)))
 
+def parse_citation_issue(element, qualifier, authority, confidence, value ,recordUri):
+    g.add((recordUri, ns.citation_conferencePlace, Literal(value)))
 
+def parse_uoei(element, qualifier, authority, confidence, value ,recordUri):
+    g.add((recordUri, ns.record_uoei, Literal(value)))
 
+def parse_bookTitle(element, qualifier, authority, confidence, value ,recordUri):
+    g.add((recordUri, ns.record_bookTitle, Literal(value)))
+
+def parse_export(element, qualifier, authority, confidence, value ,recordUri):
+    g.add((recordUri, ns.record_export, Literal(value)))
+
+def parse_version(element, qualifier, authority, confidence, value ,recordUri):
+    g.add((recordUri, ns.record_version , Literal(value)))
+
+def parse_confPub(element, qualifier, authority, confidence, value ,recordUri):
+    g.add((recordUri, ns.record_conferencePublication , Literal(value)))
+
+def parse_comments(element, qualifier, authority, confidence, value ,recordUri):
+    g.add((recordUri, ns.record_comments , Literal(value)))
+
+def parse_degree_grade(element, qualifier, authority, confidence, value ,recordUri):
+    g.add((recordUri, ns.record_degree_grade , Literal(value)))
+
+def parse_degree_grantor(element, qualifier, authority, confidence, value ,recordUri):
+    g.add((recordUri, ns.record_degree_grantor , Literal(value)))
+
+def parse_event(element, qualifier, authority, confidence, value ,recordUri):
+    if qualifier == "title":
+        g.add((recordUri,ns.record_eventTitle,Literal(value)))
+    if qualifier == "location":
+        g.add((recordUri,ns.record_eventLocation,Literal(value)))
+    if qualifier == "type":
+        g.add((recordUri,ns.record_eventType,Literal(value)))
 
 def process_qualifiers(element, qualifier, authority, confidence, value ,recordUri):
     #create instance of record
@@ -303,43 +333,36 @@ def process_qualifiers(element, qualifier, authority, confidence, value ,recordU
     elif element == "journal":
         parse_journal(element, qualifier, authority, confidence, value ,recordUri)
         # debugDic = debug_func(element, qualifier)
-    
     elif element == "citationEndPage":
-        #parse_citation_endp(element, qualifier, authority, confidence, value ,recordUri)
+        # parse_citation_endp(element, qualifier, authority, confidence, value ,recordUri)
         pass
         # debugDic = debug_func(element, qualifier)
-    
     elif element == "citationIssue":
-        if qualifier != None:
-            pass
+        # parse_citation_issue(element, qualifier, authority, confidence, value ,recordUri)
         # debugDic = debug_func(element, qualifier)
+        pass
     elif element == "citationTitle":
         if qualifier != None:
             pass
         # debugDic = debug_func(element, qualifier)
     elif element == "citationConferencePlace":
-        if qualifier != None:
-            pass
+        #parse_citation_conf(element, qualifier, authority, confidence, value ,recordUri)
         # debugDic = debug_func(element, qualifier)
+        pass
     elif element == "event":
-        if qualifier == "title":
-            pass
-        else:
-            pass
-        # debugDic = debug_func(element, qualifier)
+        parse_event(element, qualifier, authority, confidence, value ,recordUri)
     elif element == "uoei":
-        if qualifier != None:
-            pass
         # debugDic = debug_func(element, qualifier)
+        parse_uoei(element, qualifier, authority, confidence, value ,recordUri)
     #elif element == "relation":
     #    if qualifier == "publisherversion": #this is optional
     #        pass
     #    else:
     #        pass
     elif element == "bookTitle":
-        if qualifier != None:
-            pass
-        
+        #if qualifier != None:
+        #    pass
+        parse_bookTitle(element, qualifier, authority, confidence, value ,recordUri)
         # debugDic = debug_func(element, qualifier)
     elif element == "citationVolume":
         if qualifier != None:
@@ -351,22 +374,22 @@ def process_qualifiers(element, qualifier, authority, confidence, value ,recordU
             pass
         # debugDic = debug_func(element, qualifier)
     elif element == "version":
-        if qualifier != None:
-            pass
+        parse_version(element, qualifier, authority, confidence, value ,recordUri)
         # debugDic = debug_func(element, qualifier)
     elif element == "export":
         if qualifier == "identifier":
             pass
         else:
             pass
+        parse_export(element, qualifier, authority, confidence, value ,recordUri)
         # debugDic = debug_func(element, qualifier)
     elif element == "conferencePublication":
         if qualifier != None:
             pass
+        parse_confPub(element, qualifier, authority, confidence, value ,recordUri)
         # debugDic = debug_func(element, qualifier)
     elif element == "comments":
-        if qualifier != None:
-            pass
+        parse_comments(element, qualifier, authority, confidence, value ,recordUri)
         # debugDic = debug_func(element, qualifier)
     elif element == "citationConferenceDate":
         if qualifier != None:
@@ -374,9 +397,9 @@ def process_qualifiers(element, qualifier, authority, confidence, value ,recordU
         # debugDic = debug_func(element, qualifier)
     elif element == "degree":
         if qualifier == "grade":
-            pass
+            parse_degree_grade(element, qualifier, authority, confidence, value ,recordUri)
         elif qualifier == "grantor":
-            pass
+            parse_degree_grantor(element, qualifier, authority, confidence, value ,recordUri)
         else:
             pass
         # debugDic = debug_func(element, qualifier)
@@ -390,8 +413,6 @@ def getInfoDIM(xmlString):
     listRecords = root.find(getXmlString("ListRecords","top"))
     records = listRecords.findall(getXmlString("record","top"))
     
-    elementSet, qualifierSet = set(), set()
-    
     for record in records:
         recordHeader = record.find(getXmlString("header","top"))
         recordId = recordHeader.find(getXmlString("identifier","top")).text
@@ -399,6 +420,7 @@ def getInfoDIM(xmlString):
         recordIdUri = recordId.replace('/','_')
         #TODO publish timestamp in DB
         publishTimeStamp = recordHeader.find(getXmlString("datestamp","top")).text
+
         #TODO setSpecs têm a informação dos "departamentos", mesmo para além dos nossos
         recordMetadata = record.find(getXmlString("metadata","top"))
         recordUri = URIRef(f"{ns}record_{recordIdUri}")
@@ -408,13 +430,24 @@ def getInfoDIM(xmlString):
         departmentIds = recordHeader.findall(getXmlString("setSpec","top"))
         
         for departmentId in departmentIds:
-            #g.add 
-            pass
+            dep_id = departmentId.text
+            departmentUri = URIRef(f"{ns}department_{dep_id}")
+            if dep_id not in departmentsCreated:
+                departmentsCreated.add(dep_id)
+                g.add((departmentUri,RDF.type,OWL.NamedIndividual))
+                g.add((departmentUri,RDF.type,ns.Department))
+                g.add((departmentUri,ns.department_id,Literal(dep_id)))
+
+            g.add((departmentUri,ns.dep_has_rec , recordUri))
+            g.add((recordUri,ns.in_dep , departmentUri))
+            
 
         if recordMetadata:
 
             dim = recordMetadata.find(getXmlString("dim","dim"))
             fields = dim.findall(getXmlString("field","dim"))
+
+            eventData = {}
 
             for field in fields:
                 
@@ -426,6 +459,10 @@ def getInfoDIM(xmlString):
                 authority = field.attrib.get("authority")
                 confidence = field.attrib.get("confidence")
 
+                #events are a special case, must be processed in the exterior
+                if element == "event":
+                    eventData[qualifier] = field.text
+
                 value = process_qualifiers(element, qualifier, authority, confidence, field.text,recordUri)
 
 def getInfoOPEN_AIRE(xmlString):
@@ -433,93 +470,66 @@ def getInfoOPEN_AIRE(xmlString):
     root = ET.fromstring(xmlString)
     listRecords = root.find(getXmlString("ListRecords","top"))
     records = listRecords.findall(getXmlString("record","top"))
-    
-    elementSet, qualifierSet = set(), set()
-    # debugDic={}
 
-
-    #print(records)
     for record in records:
         recordHeader = record.find(getXmlString("header","top"))
         recordId = recordHeader.find(getXmlString("identifier","top")).text
         recordId = recordId.split(":")[-1]
-        #TODO publish timestamp in DB
-        publishTimeStamp = recordHeader.find(getXmlString("datestamp","top")).text
-        #TODO setSpecs têm a informação dos "departamentos", mesmo para além dos nossos
-        departmentIds = recordHeader.findall(getXmlString("setSpec","top"))
-        #for ...
-
+        recordIdUri = recordId.replace('/','_')
         recordMetadata = record.find(getXmlString("metadata","top"))
-        # g.add((recordUri,RDF.type,OWL.NamedIndividual))
-        # g.add((recordUri,RDF.type,ns.Record))
-        # g.add((recordUri,ns.record_id,Literal(recordId)))
+        recordUri = URIRef(f"{ns}record_{recordIdUri}")
 
         if recordMetadata:
 
             resource = recordMetadata.find("{http://namespace.openaire.eu/schema/oaire/}resource")
             funding_references = resource.findall('.//{http://namespace.openaire.eu/schema/oaire/}fundingReference')
 
-            for i, funding_ref in enumerate(funding_references, start=1):
-                
-                print(f"Funding Reference {i}:")
+            for funding_ref in funding_references:
                 funder_name_elem = funding_ref.find('{http://namespace.openaire.eu/schema/oaire/}funderName')
-                if funder_name_elem is not None:
-                    print("Funder Name:", funder_name_elem.text)
+                
+                if funder_name_elem is None:
+                    continue
+                
+                fund_ent_name_processed = funder_name_elem.text.lower().replace(" ","_")
+                fund_ent_uri = URIRef(f"{ns}fund_ent_{fund_ent_name_processed}")
+
+                g.add((fund_ent_uri,ns.funded,recordUri))
+                g.add((recordUri,ns.funded_by,fund_ent_uri))
+
+                if fund_ent_uri not in fundEntCreated:
+                    g.add((fund_ent_uri,RDF.type,OWL.NamedIndividual))
+                    g.add((fund_ent_uri,RDF.type,ns.FundingEntity))
+                    fundEntCreated.add(fund_ent_name_processed)
+
+
                 funder_identifier_elem = funding_ref.find('{http://namespace.openaire.eu/schema/oaire/}funderIdentifier')
-                if funder_identifier_elem is not None:
-                    print("Funder Identifier Type:", funder_identifier_elem.attrib.get('funderIdentifierType', ''))
-                    print("Funder Identifier:", funder_identifier_elem.text)
                 funding_stream_elem = funding_ref.find('{http://namespace.openaire.eu/schema/oaire/}fundingStream')
-                if funding_stream_elem is not None:
-                    print("Funding Stream:", funding_stream_elem.text)
                 award_number_elem = funding_ref.find('{http://namespace.openaire.eu/schema/oaire/}awardNumber')
+
+                if funder_name_elem is not None:
+                    g.add((fund_ent_uri, ns.funding_name, Literal(funder_name_elem.text)))
+                if funder_identifier_elem is not None:
+                    g.add((fund_ent_uri,ns.funding_uri,Literal(funder_identifier_elem.text)))
+                if funding_stream_elem is not None:
+                    g.add((recordUri,ns.record_fundingStream,Literal(funding_stream_elem.text)))
                 if award_number_elem is not None:
-                    print("Award Number:", award_number_elem.text)
-                print()
+                    g.add((recordUri,ns.record_fundingAward, Literal(award_number_elem.text)))
 
 
+depFile = open("sets.json")
+departments = json.load(depFile)
 
-
-# metadataPrefix = "dim"
-# endpoint_url = 'https://repositorium.sdum.uminho.pt/oai/oai'
-# params = { 'verb': 'ListIdentifiers', 'metadataPrefix': 'oai_dc', 'metadataPrefix': 'com_1822_21291'}
-# print(f'Requesting {endpoint_url}: {params}')
-    
-# r = requests.get(endpoint_url, params=params)
-# with open("old_dim.xml",'r') as f:
-#     r = f.read()
-
-
-# rt = getRToken(r)
-# getInfo(r)
-# print(rt.text)
-
-
-
-#rt = getRToken(r.text)
-# while rt.text != None:
-#     print(rt.text)
-#     params = { 'verb': 'ListIdentifiers', 'resumptionToken': rt.text}
-#     r = requests.get(endpoint_url, params=params)
-#     rt = getRToken(r.text)
-
-
-# files = os.listdir("oai_openaire")
-
-# for file in files:
-#     f = open(f"oai_openaire/{file}")
-#     print(f"reading file {file}")
-#     getInfoOPEN_AIRE(f.read())
-#     f.close()
-
-# for k,v in debugDic.items():
-#     debugDic[k] = list(v)
-# with open("debugOai_openaire.json","w") as f:
-#     json.dump(debugDic,f,indent=4,ensure_ascii=False)
-
+for dep in departments:
+    departmentUri = URIRef(f"{ns}department_{dep['id']}")
+    departmentsCreated.add(dep['id'])
+    g.add((departmentUri,RDF.type,OWL.NamedIndividual))
+    g.add((departmentUri,RDF.type,ns.Department))
+    g.add((departmentUri, ns.department_id , Literal(dep["id"])))
+    g.add((departmentUri, ns.department_name , Literal(dep["designacao"])))
 
 dimFiles = os.listdir("dim")
-openaireFiles = os.listdir("oai_openaire")
+dimFiles = [x for x in dimFiles if x.endswith(".xml")]
+
 
 for file in dimFiles:
     f = open(f"dim/{file}")
@@ -527,12 +537,14 @@ for file in dimFiles:
     getInfoDIM(f.read())
     f.close()
 
-# for file in openaireFiles:
-#     f = open(f"oai_openaire/{file}")
-#     print(f"reading file {file}")
-#     getInfoOPEN_AIRE(f.read())
-#     f.close()
-    
+openaireFiles = os.listdir("oai_openaire")
+openaireFiles = [x for x in openaireFiles if x.endswith(".xml")]
+
+for file in openaireFiles:
+    f = open(f"oai_openaire/{file}")
+    print(f"reading file {file}")
+    getInfoOPEN_AIRE(f.read())
+    f.close()
 
 print("Serializing")
 g.serialize(format="ttl",destination="ontology/repositoriumTeste.ttl")
