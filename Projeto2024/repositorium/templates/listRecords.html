@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>GraphDB Data</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/navBar.css') }}"/>
+</head>
+<body>
+
+    <div class="sidebar">
+        {% include 'sidebar.html' %}
+    </div>
+
+<div style="margin-left:25%;padding:1px 16px;height:1000px;">
+
+    <div class="filters">
+        <h2>Filters</h2>
+        <form class="form_filters" action="listRecords" method="post">
+            <div class="input-group recordId">
+                <label for="recordId">Id:</label>
+                <input type="text" id="recordId" name="recordId">
+            </div>
+            <div class="input-group title">
+                <label for="title">Title:</label>
+                <input type="text" id="title" name="title">
+            </div>
+            <div class="input-group contributor">
+                <label for="contributor">Contributor:</label>
+                <input type="text" id="contributor" name="contributor">
+            </div>
+            <div class="input-group orderBy">
+                <label for="orderBy">Order by:</label>
+                <select name="orderBy" id="orderBy">
+                    <option value=""></option>
+                    <option value="alc">Alphabetic CRES</option>
+                    <option value="ald">Alphabetic DECRES</option>
+                    <option value="dc">Date CRES</option>
+                    <option value="dd">Date DECRES</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <input type="submit" value="🔎">
+            </div>
+        </form>
+    </div>
+    <div class="list">
+        <h2>Results | {{ listRecords|length }}</h2>
+        <table id="listRecords">
+            <tr>
+                <th>ID Record</th>
+                <th>Title Record</th>
+                <th>Authors</th>
+                <th>Date Record</th>
+            </tr>
+        {% for record in listRecords %}
+            <tr id="recordId_{{ loop.index }}">
+                <td><a href="{{ record.id.value }}"> {{ record_id }} </a></td>
+                <td><a href="{{ record.id.value }}"> {{ record.title.value }} </a></td>
+                <td>
+                {% for contributor, id in record.names %}
+                    <a href="{{ id }}"> {{ contributor.value }} </a> | 
+                {% endfor %}
+                </td>
+                <td>{{ record.timestamp.value }}</td>
+            </tr>
+        {% endfor %}
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

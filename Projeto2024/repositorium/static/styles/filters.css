@@ -1,0 +1,26 @@
+.filters {
+    border-radius: 25px;
+    background: #effcff;
+    padding: 20px;
+    width: 200px;
+    height: 150px; 
+}
+
+.form_filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.form_filters .input-group {
+    display: flex;
+    flex-direction: column;
+}
+.form_filters .input-group.author {
+    flex: 2;
+}
+.form_filters .input-group.recordId {
+    flex: 1;
+}
+.form_filters input[type="text"], .form_filters select {
+    width: 100%;
+}
