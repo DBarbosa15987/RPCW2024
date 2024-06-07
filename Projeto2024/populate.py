@@ -1,7 +1,5 @@
-import glob
 import json
 import os
-import requests
 import xml.etree.ElementTree as ET
 import html
 from rdflib import Namespace,URIRef,Graph,Literal
@@ -41,7 +39,6 @@ def getRToken(xmlString):
 
 def getXmlString(s,type):
     r = ""
-
     match type:
         case "top":
             r = f"{{http://www.openarchives.org/OAI/2.0/}}{s}"
@@ -60,7 +57,7 @@ def debug_func(element, qualifier):
         debugDic[element].add(qualifier)
 
 
-def parse_contributors(element, qualifier, authority, confidence, value ,recordUri):
+def parse_contributors(qualifier, authority, confidence, value ,recordUri):
     global counterContributors
     new_person_uri = URIRef(f"{ns}contributor_{counterContributors}")
     counterContributors += 1
@@ -92,19 +89,15 @@ def parse_contributors(element, qualifier, authority, confidence, value ,recordU
 
     return new_person_uri
 
-
-def parse_date(element, qualifier, authority, confidence, value ,recordUri):
+def parse_date(qualifier, value ,recordUri):
     if qualifier == "issued":
         g.add((recordUri, ns.record_dateIssued, Literal(value)))
     elif qualifier == "embargo":
         g.add((recordUri, ns.record_dateEmbargo, Literal(value)))
-    else:
-        pass
 
-
-def parse_identifier(element, qualifier, authority, confidence, value ,recordUri):
+def parse_identifier(qualifier, value ,recordUri):
     if qualifier == "citation":
-        g.add((recordUri, ns.record_citation, Literal(value)))
+        g.add((recordUri, ns.record_citation, Literal(value))) #FIXME
     elif qualifier == "issn":
         g.add((recordUri, ns.record_issn, Literal(value)))
     elif qualifier == "uri":
@@ -126,7 +119,7 @@ def parse_identifier(element, qualifier, authority, confidence, value ,recordUri
     else:
         pass
 
-def parse_description(element, qualifier, authority, confidence, value ,recordUri):
+def parse_description(qualifier, value ,recordUri):
     if qualifier == "abstract":
         g.add((recordUri, ns.record_abstract, Literal(value)))
     elif qualifier == "sponsorship":
@@ -136,13 +129,13 @@ def parse_description(element, qualifier, authority, confidence, value ,recordUr
     else:
         g.add((recordUri, ns.record_description, Literal(value))) #general
 
-def parse_language(element, qualifier, authority, confidence, value ,recordUri):
+def parse_language(qualifier, value ,recordUri):
     if qualifier == "iso":
-        g.add((recordUri, ns.record_language, Literal(value)))
+        g.add((recordUri, ns.record_language, Literal(value))) #FIXME
     else:
         pass
 
-def parse_publisher(element, qualifier, authority, confidence, value ,recordUri):
+def parse_publisher(qualifier, value ,recordUri):
     global counterPublisher
     new_publisher_uri = URIRef(f"{ns}publisher_{counterPublisher}")
     counterPublisher += 1
@@ -152,68 +145,55 @@ def parse_publisher(element, qualifier, authority, confidence, value ,recordUri)
         g.add((new_publisher_uri,RDF.type,ns.PublisherEntity))
         publishersCreated.add(value)
 
-    #if authority != None:
-    #    pass
-
-    #TODO: verify if this cannot be a single entity
     if qualifier == "uri":
         g.add((new_publisher_uri, ns.publisher_uri, Literal(value)))
     else:
         g.add((new_publisher_uri, ns.publisher_name, Literal(value)))
 
     g.add((new_publisher_uri, ns.published, recordUri))
-    g.add((recordUri, ns.published, new_publisher_uri))
+    g.add((recordUri, ns.published_by, new_publisher_uri))
 
     return new_publisher_uri
 
-
-def parse_rights(element, qualifier, authority, confidence, value ,recordUri):
+def parse_rights(qualifier, value ,recordUri):
     if qualifier == "uri":
         g.add((recordUri, ns.record_rightsUri, Literal(value)))
     else:
         g.add((recordUri, ns.record_rights, Literal(value)))
 
-
-def parse_subject(element, qualifier, authority, confidence, value ,recordUri):
+def parse_subject(qualifier, value ,recordUri):
     global counterSubject
     new_subject_uri = URIRef(f"{ns}subject_{counterSubject}")
-    counterSubject += 1
 
     if value not in subjectsCreated:
+        counterSubject += 1
         g.add((new_subject_uri,RDF.type,OWL.NamedIndividual))
         g.add((new_subject_uri,RDF.type,ns.Subject))
         subjectsCreated.add(value)
 
-    if qualifier == "ods":
-        g.add((new_subject_uri, ns.subject_ods, Literal(value)))
-    elif qualifier == "fos":
-        g.add((new_subject_uri, ns.subject_fos, Literal(value)))
-    elif qualifier == "acm":
-        g.add((new_subject_uri, ns.subject_acm, Literal(value)))
-    elif qualifier == "wos":
-        g.add((new_subject_uri, ns.subject_wos, Literal(value)))
-    else:
-        g.add((new_subject_uri, ns.subject_, Literal(value)))
+        if qualifier == "ods":
+            g.add((new_subject_uri, ns.subject_ods, Literal(value)))
+        elif qualifier == "fos":
+            g.add((new_subject_uri, ns.subject_fos, Literal(value)))
+        elif qualifier == "acm":
+            g.add((new_subject_uri, ns.subject_acm, Literal(value)))
+        elif qualifier == "wos":
+            g.add((new_subject_uri, ns.subject_wos, Literal(value)))
+        else:
+            g.add((new_subject_uri, ns.subject_, Literal(value)))
 
     g.add((new_subject_uri, ns.is_subject_in, recordUri))
     g.add((recordUri, ns.has_subject, new_subject_uri))
 
     return new_subject_uri
 
-
-def parse_title(element, qualifier, authority, confidence, value ,recordUri):
+def parse_title(qualifier, value ,recordUri):
     if qualifier == "alternative":
         g.add((recordUri,ns.record_alternativeTitle, Literal(value)))
     else:
         g.add((recordUri,ns.record_title,Literal(value)))
 
-def parse_type(element, qualifier, authority, confidence, value ,recordUri):
-    g.add((recordUri, ns.record_type, Literal(value)))
-
-def parse_peerreviewed(element, qualifier, authority, confidence, value ,recordUri):
-    g.add((recordUri, ns.record_peerReviewed, Literal(value)))
-
-def parse_journal(element, qualifier, authority, confidence, value ,recordUri):
+def parse_journal(authority, confidence, value ,recordUri):
     
     global counterJournal
     new_journal_uri = URIRef(f"{ns}journal_{counterJournal}")
@@ -224,54 +204,24 @@ def parse_journal(element, qualifier, authority, confidence, value ,recordUri):
         g.add((new_journal_uri,RDF.type,ns.Journal))
         journalsCreated.add(value)
 
-
     if authority != None:
         g.add((new_journal_uri,ns.journal_authority,Literal(authority)))
     if confidence != None:
         g.add((new_journal_uri,ns.journal_confidence,Literal(confidence)))
         
+    g.add((new_journal_uri,ns.with_record,recordUri))
+    g.add((recordUri,ns.in_journal,new_journal_uri))
     g.add((new_journal_uri,ns.journal_name,Literal(value)))
 
-#def parse_citation_endp(element, qualifier, authority, confidence, value ,recordUri)
 
-def parse_publicationStatus(element, qualifier, authority, confidence, value ,recordUri):
-    g.add((recordUri, ns.record_publicationStatus, Literal(value)))
+def parse_degree(qualifier, value ,recordUri):
+    if qualifier == "grade":
+            g.add((recordUri, ns.record_degree_grade , Literal(value)))
+    elif qualifier == "grantor":
+        g.add((recordUri, ns.record_degree_grantor , Literal(value)))
+        
 
-
-def parse_citation_endp(element, qualifier, authority, confidence, value ,recordUri):
-    g.add((recordUri, ns.record_endPage, Literal(value)))
-
-def parse_citation_conf(element, qualifier, authority, confidence, value ,recordUri):
-    g.add((recordUri, ns.citation_conferencePlace, Literal(value)))
-
-def parse_citation_issue(element, qualifier, authority, confidence, value ,recordUri):
-    g.add((recordUri, ns.citation_conferencePlace, Literal(value)))
-
-def parse_uoei(element, qualifier, authority, confidence, value ,recordUri):
-    g.add((recordUri, ns.record_uoei, Literal(value)))
-
-def parse_bookTitle(element, qualifier, authority, confidence, value ,recordUri):
-    g.add((recordUri, ns.record_bookTitle, Literal(value)))
-
-def parse_export(element, qualifier, authority, confidence, value ,recordUri):
-    g.add((recordUri, ns.record_export, Literal(value)))
-
-def parse_version(element, qualifier, authority, confidence, value ,recordUri):
-    g.add((recordUri, ns.record_version , Literal(value)))
-
-def parse_confPub(element, qualifier, authority, confidence, value ,recordUri):
-    g.add((recordUri, ns.record_conferencePublication , Literal(value)))
-
-def parse_comments(element, qualifier, authority, confidence, value ,recordUri):
-    g.add((recordUri, ns.record_comments , Literal(value)))
-
-def parse_degree_grade(element, qualifier, authority, confidence, value ,recordUri):
-    g.add((recordUri, ns.record_degree_grade , Literal(value)))
-
-def parse_degree_grantor(element, qualifier, authority, confidence, value ,recordUri):
-    g.add((recordUri, ns.record_degree_grantor , Literal(value)))
-
-def parse_event(element, qualifier, authority, confidence, value ,recordUri):
+def parse_event(qualifier, value ,recordUri):
     if qualifier == "title":
         g.add((recordUri,ns.record_eventTitle,Literal(value)))
     if qualifier == "location":
@@ -284,127 +234,88 @@ def process_qualifiers(element, qualifier, authority, confidence, value ,recordU
     #debug_func(element, qualifier)
 
     if element == "contributor":
-        personUri = parse_contributors(element, qualifier, authority, confidence, value ,recordUri)
+        parse_contributors(qualifier, authority, confidence, value ,recordUri)
 
     elif element == "date":
-        parse_date(element, qualifier, authority, confidence, value ,recordUri)
+        parse_date(qualifier, value ,recordUri)
     
     elif element == "identifier":
-        parse_identifier(element, qualifier, authority, confidence, value ,recordUri)
-        # debugDic = debug_func(element, qualifier)
+        parse_identifier(qualifier, value ,recordUri)
 
     elif element == "description":
-        parse_description(element, qualifier, authority, confidence, value ,recordUri)
-        # debugDic = debug_func(element, qualifier)
+        parse_description(qualifier, value ,recordUri)
         
     elif element == "language":
-        parse_language(element, qualifier, authority, confidence, value ,recordUri)
-        # debugDic = debug_func(element, qualifier)
+        parse_language(qualifier, value ,recordUri)
         
     elif element == "publisher":
-        publisherUri = parse_publisher(element, qualifier, authority, confidence, value ,recordUri)
-        # debugDic = debug_func(element, qualifier)
+        parse_publisher(qualifier, value ,recordUri)
 
     elif element == "rights":
-        parse_rights(element, qualifier, authority, confidence, value ,recordUri)
+        parse_rights(qualifier, value ,recordUri)
         
-        # debugDic = debug_func(element, qualifier)
     elif element == "subject":
-        subjectUri = parse_subject(element, qualifier, authority, confidence, value ,recordUri)
+        parse_subject(qualifier, value ,recordUri)
         
-        # debugDic = debug_func(element, qualifier)
     elif element == "title":
-        # g.add((recordUri,ns.record_title,Literal(value)))
-        parse_title(element, qualifier, authority, confidence, value ,recordUri)
+        parse_title(qualifier, value ,recordUri)
         
-        # debugDic = debug_func(element, qualifier)
     elif element == "type":
-        parse_type(element, qualifier, authority, confidence, value ,recordUri)
-            
-        # debugDic = debug_func(element, qualifier)
+        g.add((recordUri, ns.record_type, Literal(value)))    
+
     elif element == "peerreviewed":
-        parse_peerreviewed(element, qualifier, authority, confidence, value ,recordUri)    
-            
-        # debugDic = debug_func(element, qualifier)
+        g.add((recordUri, ns.record_peerReviewed, Literal(value)))    
+
     elif element == "publicationstatus":
-        parse_publicationStatus(element, qualifier, authority, confidence, value ,recordUri)
-        
-        # debugDic = debug_func(element, qualifier)
+        g.add((recordUri, ns.record_publicationStatus, Literal(value)))
+
     elif element == "journal":
-        parse_journal(element, qualifier, authority, confidence, value ,recordUri)
-        # debugDic = debug_func(element, qualifier)
+        parse_journal(authority, confidence, value ,recordUri)
+
     elif element == "citationEndPage":
-        # parse_citation_endp(element, qualifier, authority, confidence, value ,recordUri)
-        pass
-        # debugDic = debug_func(element, qualifier)
+        g.add((recordUri, ns.record_citationEndPage, Literal(value)))
+
     elif element == "citationIssue":
-        # parse_citation_issue(element, qualifier, authority, confidence, value ,recordUri)
-        # debugDic = debug_func(element, qualifier)
-        pass
+        g.add((recordUri, ns.record_citationIssue, Literal(value)))
+
     elif element == "citationTitle":
-        if qualifier != None:
-            pass
-        # debugDic = debug_func(element, qualifier)
+        g.add((recordUri,ns.record_citationTitle,Literal(value)))
+
     elif element == "citationConferencePlace":
-        #parse_citation_conf(element, qualifier, authority, confidence, value ,recordUri)
-        # debugDic = debug_func(element, qualifier)
-        pass
+        g.add((recordUri, ns.record_citationConferencePlace, Literal(value)))
+
     elif element == "event":
-        parse_event(element, qualifier, authority, confidence, value ,recordUri)
+        parse_event(qualifier, value ,recordUri)
+
     elif element == "uoei":
-        # debugDic = debug_func(element, qualifier)
-        parse_uoei(element, qualifier, authority, confidence, value ,recordUri)
-    #elif element == "relation":
-    #    if qualifier == "publisherversion": #this is optional
-    #        pass
-    #    else:
-    #        pass
+        g.add((recordUri, ns.record_uoei, Literal(value)))
+
     elif element == "bookTitle":
-        #if qualifier != None:
-        #    pass
-        parse_bookTitle(element, qualifier, authority, confidence, value ,recordUri)
-        # debugDic = debug_func(element, qualifier)
+        g.add((recordUri, ns.record_bookTitle, Literal(value)))
+
     elif element == "citationVolume":
-        if qualifier != None:
-            pass
-        
-        # debugDic = debug_func(element, qualifier)
+        g.add((recordUri,ns.record_citationVolume,Literal(value)))
+
     elif element == "citationStartPage":
-        if qualifier != None:
-            pass
-        # debugDic = debug_func(element, qualifier)
+        g.add((recordUri,ns.record_citationStartPage,Literal(value)))
+
     elif element == "version":
-        parse_version(element, qualifier, authority, confidence, value ,recordUri)
-        # debugDic = debug_func(element, qualifier)
+        g.add((recordUri, ns.record_version , Literal(value)))
+
     elif element == "export":
-        if qualifier == "identifier":
-            pass
-        else:
-            pass
-        parse_export(element, qualifier, authority, confidence, value ,recordUri)
-        # debugDic = debug_func(element, qualifier)
+        g.add((recordUri, ns.record_export, Literal(value)))
+
     elif element == "conferencePublication":
-        if qualifier != None:
-            pass
-        parse_confPub(element, qualifier, authority, confidence, value ,recordUri)
-        # debugDic = debug_func(element, qualifier)
+        g.add((recordUri, ns.record_conferencePublication , Literal(value)))
+
     elif element == "comments":
-        parse_comments(element, qualifier, authority, confidence, value ,recordUri)
-        # debugDic = debug_func(element, qualifier)
+        g.add((recordUri, ns.record_comments , Literal(value)))
+
     elif element == "citationConferenceDate":
-        if qualifier != None:
-            pass
-        # debugDic = debug_func(element, qualifier)
+        g.add((recordUri,ns.record_citationConferenceDate,Literal(value)))
+
     elif element == "degree":
-        if qualifier == "grade":
-            parse_degree_grade(element, qualifier, authority, confidence, value ,recordUri)
-        elif qualifier == "grantor":
-            parse_degree_grantor(element, qualifier, authority, confidence, value ,recordUri)
-        else:
-            pass
-        # debugDic = debug_func(element, qualifier)
-    else:
-        debugDic[element] = set()
+        parse_degree(qualifier, value ,recordUri)
     
 
 def getInfoDIM(xmlString):
@@ -418,17 +329,16 @@ def getInfoDIM(xmlString):
         recordId = recordHeader.find(getXmlString("identifier","top")).text
         recordId = recordId.split(":")[-1]
         recordIdUri = recordId.replace('/','_')
-        #TODO publish timestamp in DB
         publishTimeStamp = recordHeader.find(getXmlString("datestamp","top")).text
-
-        #TODO setSpecs têm a informação dos "departamentos", mesmo para além dos nossos
         recordMetadata = record.find(getXmlString("metadata","top"))
+
         recordUri = URIRef(f"{ns}record_{recordIdUri}")
         g.add((recordUri,RDF.type,OWL.NamedIndividual))
         g.add((recordUri,RDF.type,ns.Record))
         g.add((recordUri,ns.record_id,Literal(recordId)))
+        g.add((recordUri,ns.record_timestamp,Literal(publishTimeStamp,datatype=XSD.dateTime)))
+
         departmentIds = recordHeader.findall(getXmlString("setSpec","top"))
-        
         for departmentId in departmentIds:
             dep_id = departmentId.text
             departmentUri = URIRef(f"{ns}department_{dep_id}")
@@ -547,4 +457,4 @@ for file in openaireFiles:
     f.close()
 
 print("Serializing")
-g.serialize(format="ttl",destination="ontology/repositoriumTeste.ttl")
+g.serialize(format="ttl",destination="ontology/repositorium.ttl")
