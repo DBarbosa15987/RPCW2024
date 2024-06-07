@@ -97,7 +97,7 @@ def parse_date(qualifier, value ,recordUri):
 
 def parse_identifier(qualifier, value ,recordUri):
     if qualifier == "citation":
-        g.add((recordUri, ns.record_citation, Literal(value))) #FIXME
+        g.add((recordUri, ns.record_citation, Literal(value)))
     elif qualifier == "issn":
         g.add((recordUri, ns.record_issn, Literal(value)))
     elif qualifier == "uri":
@@ -131,9 +131,7 @@ def parse_description(qualifier, value ,recordUri):
 
 def parse_language(qualifier, value ,recordUri):
     if qualifier == "iso":
-        g.add((recordUri, ns.record_language, Literal(value))) #FIXME
-    else:
-        pass
+        g.add((recordUri, ns.record_language, Literal(value)))
 
 def parse_publisher(qualifier, value ,recordUri):
     global counterPublisher
@@ -213,14 +211,12 @@ def parse_journal(authority, confidence, value ,recordUri):
     g.add((recordUri,ns.in_journal,new_journal_uri))
     g.add((new_journal_uri,ns.journal_name,Literal(value)))
 
-
 def parse_degree(qualifier, value ,recordUri):
     if qualifier == "grade":
             g.add((recordUri, ns.record_degree_grade , Literal(value)))
     elif qualifier == "grantor":
         g.add((recordUri, ns.record_degree_grantor , Literal(value)))
         
-
 def parse_event(qualifier, value ,recordUri):
     if qualifier == "title":
         g.add((recordUri,ns.record_eventTitle,Literal(value)))
