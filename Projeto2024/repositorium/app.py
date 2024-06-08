@@ -257,14 +257,80 @@ def records(id):
     optional {{:{id_to_query} :record_volume ?volume.}}
     }}"""
 
+    authors_query = f"""
+    PREFIX : {prefix}
+    select * where {{ 
+    ?authors a :Author.
+    optional{{?authors :contributor_name ?name}}.
+    ?authors :authored :{id_to_query}.
+    }}
+"""
+    editors_query = f"""
+    PREFIX : {prefix}
+    select * where {{ 
+    ?editors a :Editor.
+    ?editors :edited :{id_to_query}.
+    }}
+"""
+    advisors_query = f"""
+    PREFIX : {prefix}
+    select * where {{ 
+    ?advisors a :Advisor.
+    ?advisors :advised :{id_to_query}.
+    }}
+"""
+    
+    publisher_query = f"""
+    PREFIX : {prefix}
+    select * where {{ 
+    ?publisher a :PublisherEntity.
+    ?publisher :published :{id_to_query}.
+    }}
+"""
+    
+    others_query = f"""
+    PREFIX : {prefix}
+    select * where {{ 
+    ?others a :Other.
+    ?others :contributed :{id_to_query}.
+    }}
+"""
+    journals_query = f"""
+    PREFIX : {prefix}
+    select * where {{ 
+    ?journals a :Journal.
+    ?journals :with_record :{id_to_query}.
+    }}
+"""
+    departments_query = f"""
+    PREFIX : {prefix}
+    select * where {{ 
+    ?departments a :Department.
+    ?departments :dep_has_rec :{id_to_query}.
+    }}
+"""
+    funders_query = f"""
+    PREFIX : {prefix}
+    select * where {{ 
+    ?funders a :FundingEntity.
+    ?funders :funded :{id_to_query}.
+    }}
+"""
+
+
     jsonReponse = sparql_get_query(sparql_query)
     result = jsonReponse["results"]["bindings"]
     if result:
-        data = [(k,r['value']) for k,r in result[0].items()]
-        
-        return render_template('record.html', data=data)
+        recordFields = [(k,r['value']) for k,r in result[0].items()]
+        jsonReponse_authors = sparql_get_query(authors_query)
+        resultAuthors = jsonReponse_authors["results"]["bindings"]
+        authors = [{"id": f"{author['authors']['value'].split('/')[-1]}","name":f"{author['name']['value']}"} for author in resultAuthors]
+
+
+        return render_template('record.html', data={"recordFields":recordFields,"authors":authors})
     else:
-        return render_template('empty.html', data=data)
+
+        return render_template('empty.html', data=[])
 
 #/recordDelete/${recordId}
 @app.route('/recordDelete/<id>', methods=['DELETE'])
