@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>GraphDB Data</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/navBar.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/creater.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='javascript/creater.js') }}"/>
+</head>
+<body>
+    <div class="sidebar">
+        {% include 'sidebar.html' %}
+    </div>
+
+    <div style="margin-left:25%;padding:1px 16px;height:1000px;">
+    <form method="Post" autocomplete="off" action="/createRecord">
+        <div>
+            <div>
+                <label for="title">Title:</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+
+            <div>
+                <label for="alTitle">Alternative Title:</label>
+                <input type="text" id="alTitle" name="alTitle">
+            </div>
+
+            <div>
+                <label for="issn">ISSN:</label>
+                <input type="text" id="issn" name="issn">
+            </div>
+
+            <div>
+                <label for="doi">DOI:</label>
+                <input type="text" id="doi" name="doi">
+            </div>
+
+            <div class="autocomplete" style="width:300px;">
+                <input id="names" type="text" name="names" placeholder="Name of Contributor">
+            </div>
+
+            <div class="autocomplete" style="width:300px;">
+                <input id="journals" type="text" name="journals" placeholder="Name of Journal">
+            </div>
+
+            <div class="autocomplete" style="width:300px;">
+                <input id="publishers" type="text" name="publishers" placeholder="Name of Publisher Associated">
+            </div>
+
+            <div class="autocomplete" style="width:300px;">
+                <input id="departments" type="text" name="departments" placeholder="Name of Department Associated">
+            </div>
+
+            <div class="autocomplete" style="width:300px;">
+                <input id="fundingEnts" type="text" name="fundingEnts" placeholder="Name of Funding Entities Associated">
+            </div>
+
+        </div>
+        <input type="submit" value=Create Record"">
+
+    </form>
+    </div>
+
+    <script>
+        autocomplete(document.getElementById("names"), names);
+        autocomplete(document.getElementById("journals"), journals);
+        autocomplete(document.getElementById("departments"), departments);
+        autocomplete(document.getElementById("publishers"), departments);
+        autocomplete(document.getElementById("fundingEnts"), departments);
+    </script> 
+</body>

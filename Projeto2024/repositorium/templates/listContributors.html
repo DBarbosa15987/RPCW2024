@@ -7,8 +7,6 @@
     <title>GraphDB Data</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/navBar.css') }}"/>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/filters.css') }}"/>
-    <link rel="stylesheet" href="{{ url_for('static', filename='javascript/creater.js') }}"/>
 </head>
 <body>
 
@@ -18,19 +16,20 @@
 
 <div style="margin-left:25%;padding:1px 16px;height:1000px;">
     <div class="list">
-        <h1>List Records</h1>
-        <h2>Results</h2>
-        <table id="listRecords">
+        <h1>List Contributors</h1>
+        <h2>Results | {{ listContributors|length }}</h2>
+        <table id="listDepartments">
             <tr>
-                <th>Data</th>
-                <th>Value</th>
+                <th>Department ID</th>
+                <th>Department Name</th>
             </tr>
-        {% for key, value  in data %}
+            {% for department in listContributors %}
             <tr>
-                <td> <b>{{ key }}</b> </td>
-                <td> {{ value }}</td>
+                <td>{{ department[0] }}</td>
+                <td>{{ department[1] }}</td>
             </tr>
         {% endfor %}
+        
         </table>
     </div>
 </div>

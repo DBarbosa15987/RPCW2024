@@ -1,46 +1,55 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const sendButton = document.getElementById("send-button");
-    const inputText = document.getElementById("input-text");
-    const responsesDiv = document.getElementById("responses");
-    const messageServerDiv = document.getElementById("messageServer");
+document.querySelectorAll('.deleteButton').forEach(button => {
+    button.addEventListener('click', function() {
+        const recordId = this.getAttribute('data-id');
 
-    sendButton.addEventListener("click", function () {
-        const text = inputText.value;
-        fetch('/handle_input', {
-            method: 'POST',
+        fetch(`/record/${recordId}`, {
+            method: 'DELETE',
             headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ text: text }),
-        }).then(response => {
-            return response.json();
-        }).then(data => {
-            // Clear previous entries
-            responsesDiv.innerHTML = "";
-            messageServerDiv.textContent = "Based on the data you gave us we found these job offers available:\n";
-
-            // Process results through a for loop
-            for (const result of data.results) {
-                // Create new entry
-                const newEntry = document.createElement("div");
-                newEntry.classList.add("jobListing");
-
-                baseSalary = result['salary_min'];
-                intervalSalary = result['salary'];
-                salaryCurrencyCode = result['salary_currency_code'];
-                locations = result['locations'];
-                description = result['description'];
-                addUrl = result['url'];
-
-                newEntry.textContent = `Job: ${description}\n`;
-
-                responsesDiv.appendChild(newEntry);
+                'Content-Type': 'application/json'
             }
-
-            // Clear input text
-            inputText.value = "";
-        }).catch(error => {
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Record deleted successfully');
+                // Optionally remove the table row
+                this.closest('tr').remove();
+            } else {
+                alert('Failed to delete the record');
+            }
+        })
+        .catch(error => {
             console.error('Error:', error);
+            alert('An error occurred while deleting the record');
+        });
+    });
+});
+
+document.querySelectorAll('.editButton').forEach(button => {
+    button.addEventListener('click', function() {
+        const recordId = this.getAttribute('data-id');
+        const data = {
+            // Example data to be updated
+            name: 'Updated Name',
+            value: 'Updated Value'
+        };
+
+        fetch(`/record/${recordId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Record updated successfully');
+            } else {
+                alert('Failed to update the record');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the record');
         });
     });
 });
