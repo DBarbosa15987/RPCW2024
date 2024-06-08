@@ -289,41 +289,51 @@ def deleteRecord(id):
 def createRecordGET():
     return render_template("createRecord.html")
 
-def getAutoCompletes(type,record_uri,type_uri):
+def getTriplosMultiplos(type,record_uri,type_uri):
+    # "authors","editors","advisors","journals","departments","publishers","fundingEnts"]
     query = ""
     match type:
         case "journals":
             query = f"""
-{record_uri} :contributed_by {type_uri}.
-{type_uri} :contributed {record_uri}.
+{record_uri} :in_journal :{type_uri}.
+:{type_uri} :with_record {record_uri}.
     """
-        case "publisher":
+        case "publishers":
             query = f"""
-{record_uri} :published {type_uri}.
-{type_uri} :published_by {record_uri}.
+{record_uri} :published :{type_uri}.
+:{type_uri} :published_by {record_uri}.
     """
         case "authors":
             query = f"""
-{record_uri} :authored_by {type_uri}.
-{type_uri} :authored {record_uri}.
+{record_uri} :authored_by :{type_uri}.
+:{type_uri} :authored {record_uri}.
 """
         case "advisors":
             query = f"""
-{record_uri} :advised_by {type_uri}.
-{type_uri} :advised {record_uri}.
+{record_uri} :advised_by :{type_uri}.
+:{type_uri} :advised {record_uri}.
 """
 
         case "editors":
             query = f"""
-{record_uri} :edited_by {type_uri}.
-{type_uri} :edited {record_uri}.
+{record_uri} :edited_by :{type_uri}.
+:{type_uri} :edited {record_uri}.
 """
         case "others":
             query = f"""
-{record_uri} :contributed_by {type_uri}.
-{type_uri} :contributed {record_uri}.
+{record_uri} :contributed_by :{type_uri}.
+:{type_uri} :contributed {record_uri}.
 """
-     
+        case "departments":
+            query = f"""
+{record_uri} :in_dep :{type_uri}.
+:{type_uri} :dep_has_rec {record_uri}.
+    """
+        case "fundingEnts":
+            query = f"""
+{record_uri} :funded_by :{type_uri}.
+:{type_uri} :funded {record_uri}.
+    """
     return query        
     
 def createRecordPOST(form):
@@ -331,12 +341,6 @@ def createRecordPOST(form):
     alTitle = form.get("alTitle")
     issn = form.get("issn")
     doi = form.get("doi")
-
-    names = form.get("names") #id of contributor
-    journals = form.get("journals")
-    publishers = form.get("issn")
-    departments = form.get("departments")
-    fundingEnts = form.get("fundingEnts")
 
     id_query = f"""
     PREFIX : {prefix}
@@ -354,8 +358,17 @@ def createRecordPOST(form):
     uri = f":record_0000_{i}"
     id = f"0000/{i}"
     line_alTitle,line_issn,line_doi = "","",""
-    triplos = []
     
+    relations = ["authors","editors","advisors","journals","departments","publishers","fundingEnts"]
+    triplos = []
+    for rel in relations:
+        relLst = form.get(rel) #contributor_0; contributor_1; contributor_2
+        if relLst:
+            l = relLst.split(";")
+            for r in l:
+                triplos.append(getTriplosMultiplos(rel,uri,r))
+
+
     if alTitle and alTitle != "":
         line_alTitle = f'{uri} :record_alternativeTitle "{alTitle}".'
         triplos.append(line_alTitle)
@@ -365,8 +378,6 @@ def createRecordPOST(form):
     if doi and doi != "":
         line_doi = f'{uri} :record_doi "{doi}".'
         triplos.append(line_doi)
-    if journals:
-        pass 
 
     data_hora_atual = datetime.now()
     data_iso_formatada = data_hora_atual.strftime('%Y-%m-%dT%H:%M:%S+00:00')
@@ -381,7 +392,7 @@ INSERT DATA {{
     {uri} :record_id "{id}".
     {uri} :record_title "{title}".
     {uri} :record_timestamp "{data_iso_formatada}"^^xsd:dateTime.
-    
+    {nl.join(triplos)}
     
     }}
 
