@@ -13,8 +13,11 @@ data_iso_formatada = data_hora_atual.strftime('%Y-%m-%dT%H:%M:%SZ')
 graphdb_endpoint = "http://localhost:7200/repositories/repositorium"
 prefix = "<http://rpcw.di.uminho.pt/2024/repositorium/>"
 
-limit = 50
+limit=50
 page = 1
+reset = True
+
+current_route = ""
 
 def sparql_get_query(query):
     sparql = SPARQLWrapper(graphdb_endpoint)
@@ -35,6 +38,7 @@ def search(query):
     pass
 
 def listRecordsGET( page_to_render = 'listRecords.html'):
+    global limit
     sparql_query = f"""
     PREFIX : {prefix}
 SELECT * WHERE {{ 
@@ -77,8 +81,9 @@ SELECT * WHERE {{
                     data.append(curr)
                     curr=r
                     curr['names'] = [(r['name'],id)]
-        data.append(curr)            
-        return render_template(page_to_render, listRecords=data)
+        data.append(curr)       
+        print()     
+        return render_template(page_to_render, listRecords=data, page = page)
     else:
         return render_template(page_to_render, data=[])
 
@@ -175,9 +180,9 @@ def listRecordsPOST(form):
 
         data.append(curr)
 
-        return render_template('listRecords.html', listRecords=data)
+        return render_template('actions_records.html', listRecords=data)
     else:
-        return render_template('listRecords.html', data=[])
+        return render_template('actions_records.html', data=[])
 
 @app.route('/record/<id>', methods=['GET'])
 def records(id):
@@ -261,16 +266,6 @@ def records(id):
     else:
         return render_template('empty.html', data=data)
 
-
-@app.route('/listRecords', methods=['POST','GET'])
-def listRecords():
-
-    if request.method == 'GET':
-        return listRecordsGET()
-    elif request.method == 'POST':
-        return listRecordsPOST(request.form)
-
-
 #/recordDelete/${recordId}
 @app.route('/recordDelete/<id>', methods=['DELETE'])
 #@app.route('/record/<id>', methods=['GET'])
@@ -291,18 +286,7 @@ def deleteRecord(id):
     sparql_post_query(query)
     return redirect(url_for('actionsRecords'), code=303)
 
-    
-@app.route("/actionsRecords",methods={'GET','POST'})
-def actionsRecords():
-    if request.method == 'GET':
-        return listRecordsGET('actions_records.html')
-    elif request.method == 'POST':
-        return listRecordsPOST(request.form)
-
-
 def createRecordGET():
-
-
     return render_template("createRecord.html")
 
 def getAutoCompletes(type,record_uri,type_uri):
@@ -318,11 +302,28 @@ def getAutoCompletes(type,record_uri,type_uri):
 {record_uri} :published {type_uri}.
 {type_uri} :published_by {record_uri}.
     """
-        case "contributors":
+        case "authors":
+            query = f"""
+{record_uri} :authored_by {type_uri}.
+{type_uri} :authored {record_uri}.
+"""
+        case "advisors":
+            query = f"""
+{record_uri} :advised_by {type_uri}.
+{type_uri} :advised {record_uri}.
+"""
+
+        case "editors":
+            query = f"""
+{record_uri} :edited_by {type_uri}.
+{type_uri} :edited {record_uri}.
+"""
+        case "others":
             query = f"""
 {record_uri} :contributed_by {type_uri}.
 {type_uri} :contributed {record_uri}.
-    """     
+"""
+     
     return query        
     
 def createRecordPOST(form):
@@ -380,12 +381,14 @@ INSERT DATA {{
     {uri} :record_id "{id}".
     {uri} :record_title "{title}".
     {uri} :record_timestamp "{data_iso_formatada}"^^xsd:dateTime.
-    {uri} :contributed_by :contributor_0.
-    :contributor_0 :contributed {uri}.
-    {nl.join(triplos)}
+    
+    
     }}
 
 """
+    print(query)
+    # {uri} :contributed_by :contributor_0.
+    # {nl.join(triplos)}
     sparql_post_query(query)
     return redirect(url_for('actionsRecords'), code=303)
 
@@ -467,89 +470,96 @@ def listPublishersGET():
     else:
         return render_template('listPublishers.html', data=[])
 
+@app.route('/nextPage', methods=['POST'])
+def nextPage():
+    global current_route, page, reset
+    page = page + 1
+    reset = False
+
+    if current_route == "/listRecords":
+        return redirect(url_for('listRecords'), code=303)
+    elif current_route == "/actionsRecords":
+        return redirect(url_for('actionsRecords'), code=303)
+
+@app.route('/previousPage', methods=['POST'])
+def previousPage():
+    global current_route, page, reset
+    page = page - 1
+    reset = False
+    
+    if current_route == "/listRecords":
+        return redirect(url_for('listRecords'), code=303)
+    elif current_route == "/actionsRecords":
+        return redirect(url_for('actionsRecords'), code=303)
+
+    #return redirect(url_for(current_route), code=303)
+
+@app.route('/listRecords', methods=['POST','GET'])
+def listRecords():
+    global current_route, page, reset
+
+    if not reset:
+        reset = True
+    else:    
+        page = 1
+
+    if request.method == 'GET':
+        current_route = "/listRecords"
+        return listRecordsGET()
+    elif request.method == 'POST':
+        return listRecordsPOST(request.form)
 
 @app.route("/listJournals", methods=['GET'])
 def listJournals():
+    global current_route, page
     if request.method == 'GET':
+        current_route = "/createRecord"
         return listJournalsGET()
 
 @app.route("/listPublishers", methods=['GET','POST'])
 def listPublishers():
+    global current_route, page
     if request.method == 'GET':
+        current_route = "/createRecord"
         return listPublishersGET()
 
 @app.route("/listDepartments", methods=['GET'])
 def listDepartments():
+    global current_route, page
     if request.method == 'GET':
+        current_route = "/createRecord"
         return listDepartmentsGET()
 
 @app.route("/listContributors", methods=['GET'])
 def listContributors():
+    global current_route, page
     if request.method == 'GET':
+        current_route = "/createRecord"
+        page = 1
         return listContributorsGET()
 
 @app.route("/createRecord", methods=['GET','POST'])
 def createRecord():
+    global current_route, page
     if request.method == 'GET':
+        current_route = "/createRecord"
         return createRecordGET()
     elif request.method == 'POST':
         return createRecordPOST(request.form)
 
+@app.route("/actionsRecords",methods={'GET','POST'})
+def actionsRecords():
+    global current_route, page
+    if request.method == 'GET':
+        current_route = "/actionsRecords"
+        return listRecordsGET(page_to_render='actions_records.html')
+    elif request.method == 'POST':
+        return listRecordsPOST(request.form)
+
+
 @app.route('/')
 def index():
     return render_template('index.html', data = {"data": data_iso_formatada})
-
-
-# @app.put("/advogados/id") #FIXME @app.put("/records/<id>")
-# def updateRecord(id):
-
-#     dados = request.json
-#     if not dados:
-#         return jsonify({"erro": "Não foram enviados dados do advogado a criar..."}),400
-#     else:
-
-#         triplosApagar = []
-#         triplosInserir = []
-#         if "nome" in dados:
-#             triplosApagar.append(f":{dados['id']} :nome ?o .")
-#             triplosInserir.append(f":{dados['id']} :nome \"{dados['nome']}\" .")
-#         if "idade" in dados:
-#             triplosApagar.append(f":{dados['id']} :idade ?o .")
-#             triplosInserir.append(f":{dados['id']} :idade \"{dados['idade']}\" .")
-
-#         if "cor":
-#             triplosApagar.append(f":{dados['id']} :cor ?o .")
-#             triplosInserir.append(f":{dados['id']} :cor \"{dados['cor']}\" .")
-
-#         if "área":
-#             triplosApagar.append(f":{dados['id']} :área ?o .")
-#             triplosInserir.append(f":{dados['id']} :área \"{dados['área']}\" .")
-
-#         if "bebida":
-#             triplosApagar.append(f":{dados['id']} :bebida ?o .")
-#             triplosInserir.append(f":{dados['id']} :bebida \"{dados['bebida']}\" .")
-
-#         if "carro":
-#             triplosApagar.append(f":{dados['id']} :carro ?o .")
-#             triplosInserir.append(f":{dados['id']} :carro \"{dados['carro']}\" .")
-
-
-#         nl = "\n"
-#         query = f"""
-#     PREFIX : <http://www.di.uminho.pt/prc2021/advogados#>
-#     DELETE {{
-#         {nl.join(triplosApagar)}
-#     }}
-#     INSERT {{
-#         {nl.join(triplosInserir)}
-#     }}
-#     WHERE {{
-#         :{id} ?p ?o .
-#     }}
-# """
-#         sparql_post_query(query)
-#         return jsonify({"mensagem": f"Advogado alterado com sucesso: {id}"}),200
-
 
 
 if __name__ == '__main__':

@@ -51,7 +51,11 @@
         <h1>List Record</h1>
         <h2>Results | {{ listRecords|length }}</h2>
         <a href="createRecord"> ➕ </a>
-                
+        
+        <div class="sidebar">
+            {% include 'pagination.html' %}
+        </div>
+
         <table id="listRecords">
             <tr>
                 <th> Actions </th>
@@ -77,6 +81,10 @@
             </tr>
         {% endfor %}
         </table>
+
+        <div class="sidebar">
+            {% include 'pagination.html' %}
+        </div>
     </div>
 </div>
 
