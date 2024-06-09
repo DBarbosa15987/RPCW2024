@@ -1,0 +1,28 @@
+<h2>Filters</h2>
+<form class="form_filters" action="actionsRecords" method="post">
+    <div class="input-group recordId">
+        <label for="recordId">Id:</label>
+        <input type="text" id="recordId" name="recordId">
+    </div>
+    <div class="input-group title">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title">
+    </div>
+    <div class="input-group contributor">
+        <label for="contributor">Contributor:</label>
+        <input type="text" id="contributor" name="contributor">
+    </div>
+    <div class="input-group orderBy">
+        <label for="orderBy">Order by:</label>
+        <select name="orderBy" id="orderBy">
+            <option value=""></option>
+            <option value="alc">Alphabetic CRES</option>
+            <option value="ald">Alphabetic DECRES</option>
+            <option value="dc">Date CRES</option>
+            <option value="dd">Date DECRES</option>
+        </select>
+    </div>
+    <div class="input-group">
+        <input type="submit" value="🔎">
+    </div>
+</form>

@@ -39,7 +39,7 @@ def search(query):
 
 def listRecordsGET( page_to_render = 'listRecords.html'):
     global limit
-    sparql_query = f"""
+    query = f"""
     PREFIX : {prefix}
 SELECT * WHERE {{ 
     {{
@@ -55,9 +55,17 @@ SELECT * WHERE {{
     ?r :contributed_by ?authors.
     optional{{?authors :contributor_name ?name.}}
 }}"""
+    
+    count_query = f"""   
+    PREFIX : {prefix}
+    SELECT (count(?r) as ?count) where {{
+    ?r a :Record.
+}}
+"""
+    jsonReponseCount = sparql_get_query(count_query)
+    countResult = jsonReponseCount["results"]["bindings"]
 
-
-    jsonReponse = sparql_get_query(sparql_query)
+    jsonReponse = sparql_get_query(query)
     result = jsonReponse["results"]["bindings"]
     
     if result:
@@ -81,9 +89,9 @@ SELECT * WHERE {{
                     data.append(curr)
                     curr=r
                     curr['names'] = [(r['name'],id)]
-        data.append(curr)       
-        print()     
-        return render_template(page_to_render, listRecords=data, page = page)
+        data.append(curr)
+        count = countResult[0].get('count')
+        return render_template(page_to_render, listRecords=data, page = page, count=count)
     else:
         return render_template(page_to_render, data=[])
 
@@ -96,7 +104,7 @@ def listRecordsPOST(form):
 
     line_id, line_contributor, line_order_by_stamp,line_order_by_cont,line_title  = "", "", "","",""
     if record_id and record_id != "":
-        line_id = f'?r :record_id "{record_id}"'
+        line_id = f'?r :record_id ?id.\n?r :record_id "{record_id}".'
     else:
         line_id="?r :record_id ?id."
     if title and title != "":
@@ -184,150 +192,186 @@ def listRecordsPOST(form):
     else:
         return render_template('actions_records.html', data=[])
 
-@app.route('/record/<id>', methods=['GET'])
-def records(id):
-    id_to_query = f"record_{id}"
-    print(id_to_query)
+
+def getRecordById(id):
+ 
+    print(id)
+
     sparql_query = f"""
     PREFIX : {prefix}
     select * where {{ 
-    :{id_to_query} a :Record.
-    optional {{:{id_to_query} :record_abstract ?abstract.}}
-    optional {{:{id_to_query} :record_alternativeTitle ?alternativeTitle.}}
-    optional {{:{id_to_query} :record_articlenumber ?articlenumber.}}
-    optional {{:{id_to_query} :record_bookTitle ?bookTitle.}}
-    optional {{:{id_to_query} :record_citation ?citation.}}
-    optional {{:{id_to_query} :record_citationConferenceDate ?citationConferenceDate.}}
-    optional {{:{id_to_query} :record_citationConferencePlace ?citationConferencePlace.}}
-    optional {{:{id_to_query} :record_citationEdition ?citationEdition.}}
-    optional {{:{id_to_query} :record_citationEndPage ?citationEndPage.}}
-    optional {{:{id_to_query} :record_citationIssue ?citationIssue.}}
-    optional {{:{id_to_query} :record_citationStartPage ?citationStartPage.}}
-    optional {{:{id_to_query} :record_citationTitle ?citationTitle.}}
-    optional {{:{id_to_query} :record_citationVolume ?citationVolume.}}
-    optional {{:{id_to_query} :record_comments ?comments.}}
-    optional {{:{id_to_query} :record_conferencePublication ?conferencePublication.}}
-    optional {{:{id_to_query} :record_dateEmbargo ?dateEmbargo.}}
-    optional {{:{id_to_query} :record_dateIssued ?dateIssued.}}
-    optional {{:{id_to_query} :record_degre_grade ?degre_grade.}}
-    optional {{:{id_to_query} :record_degree_grantor ?degree_grantor.}}
-    optional {{:{id_to_query} :record_description ?description.}}
-    optional {{:{id_to_query} :record_doi ?doi.}}
-    optional {{:{id_to_query} :record_eisbn ?eisbn.}}
-    optional {{:{id_to_query} :record_eissn ?eissn.}}
-    optional {{:{id_to_query} :record_embargoFct ?embargoFct.}}
-    optional {{:{id_to_query} :record_eventLocation ?eventLocation.}}
-    optional {{:{id_to_query} :record_eventTitle ?eventTitle.}}
-    optional {{:{id_to_query} :record_eventType ?eventType.}}
-    optional {{:{id_to_query} :record_export ?export.}}
-    optional {{:{id_to_query} :record_exportIdentifier ?exportIdentifier.}}
-    #optional {{:{id_to_query} :record_fundingAward ?fundingAward.}}
-    #optional {{:{id_to_query} :record_fundingStream ?fundingStream.}}
-    optional {{:{id_to_query} :record_hasVersion ?hasVersion.}}
-    optional {{:{id_to_query} :record_id ?id.}}
-    optional {{:{id_to_query} :record_isBasedOn ?isBasedOn.}}
-    optional {{:{id_to_query} :record_isPartOfSeries ?isPartOfSeries.}}
-    optional {{:{id_to_query} :record_isVersionOf ?isVersionOf.}}
-    optional {{:{id_to_query} :record_isbn ?isbn.}}
-    optional {{:{id_to_query} :record_issn ?issn.}}
-    optional {{:{id_to_query} :record_journal ?journal.}}
-    optional {{:{id_to_query} :record_language ?language.}}
-    optional {{:{id_to_query} :record_number ?number.}}
-    optional {{:{id_to_query} :record_ogUri ?ogUri.}}
-    optional {{:{id_to_query} :record_other ?other.}}
-    optional {{:{id_to_query} :record_pagination ?pagination.}}
-    optional {{:{id_to_query} :record_peerReviewed ?peerReviewed.}}
-    optional {{:{id_to_query} :record_pmc ?pmc.}}
-    optional {{:{id_to_query} :record_pmid ?pmid.}}
-    optional {{:{id_to_query} :record_publicationStatus ?publicationStatus.}}
-    optional {{:{id_to_query} :record_publicationversion ?publicationversion.}}
-    optional {{:{id_to_query} :record_publisherVersion ?publisherVersion.}}
-    optional {{:{id_to_query} :record_relation ?relation.}}
-    optional {{:{id_to_query} :record_relationUri ?relationUri.}}
-    optional {{:{id_to_query} :record_rights ?rights.}}
-    optional {{:{id_to_query} :record_rightsUri ?rightsUri.}}
-    optional {{:{id_to_query} :record_slug ?slug.}}
-    optional {{:{id_to_query} :record_sponsorship ?sponsorship.}}
-    optional {{:{id_to_query} :record_tid ?tid.}}
-    optional {{:{id_to_query} :record_timestamp ?timestamp.}}
-    optional {{:{id_to_query} :record_title ?title.}}
-    optional {{:{id_to_query} :record_type ?type.}}
-    optional {{:{id_to_query} :record_uoei ?uoei.}}
-    optional {{:{id_to_query} :record_version ?version.}}
-    optional {{:{id_to_query} :record_volume ?volume.}}
+    :{id} a :Record.
+    optional {{:{id} :record_abstract ?abstract.}}
+    optional {{:{id} :record_alternativeTitle ?alternativeTitle.}}
+    optional {{:{id} :record_articlenumber ?articlenumber.}}
+    optional {{:{id} :record_bookTitle ?bookTitle.}}
+    optional {{:{id} :record_citation ?citation.}}
+    optional {{:{id} :record_citationConferenceDate ?citationConferenceDate.}}
+    optional {{:{id} :record_citationConferencePlace ?citationConferencePlace.}}
+    optional {{:{id} :record_citationEdition ?citationEdition.}}
+    optional {{:{id} :record_citationEndPage ?citationEndPage.}}
+    optional {{:{id} :record_citationIssue ?citationIssue.}}
+    optional {{:{id} :record_citationStartPage ?citationStartPage.}}
+    optional {{:{id} :record_citationTitle ?citationTitle.}}
+    optional {{:{id} :record_citationVolume ?citationVolume.}}
+    optional {{:{id} :record_comments ?comments.}}
+    optional {{:{id} :record_conferencePublication ?conferencePublication.}}
+    optional {{:{id} :record_dateEmbargo ?dateEmbargo.}}
+    optional {{:{id} :record_dateIssued ?dateIssued.}}
+    optional {{:{id} :record_degre_grade ?degre_grade.}}
+    optional {{:{id} :record_degree_grantor ?degree_grantor.}}
+    optional {{:{id} :record_description ?description.}}
+    optional {{:{id} :record_doi ?doi.}}
+    optional {{:{id} :record_eisbn ?eisbn.}}
+    optional {{:{id} :record_eissn ?eissn.}}
+    optional {{:{id} :record_embargoFct ?embargoFct.}}
+    optional {{:{id} :record_eventLocation ?eventLocation.}}
+    optional {{:{id} :record_eventTitle ?eventTitle.}}
+    optional {{:{id} :record_eventType ?eventType.}}
+    optional {{:{id} :record_export ?export.}}
+    optional {{:{id} :record_exportIdentifier ?exportIdentifier.}}
+    #optional {{:{id} :record_fundingAward ?fundingAward.}}
+    #optional {{:{id} :record_fundingStream ?fundingStream.}}
+    optional {{:{id} :record_hasVersion ?hasVersion.}}
+    optional {{:{id} :record_id ?id.}}
+    optional {{:{id} :record_isBasedOn ?isBasedOn.}}
+    optional {{:{id} :record_isPartOfSeries ?isPartOfSeries.}}
+    optional {{:{id} :record_isVersionOf ?isVersionOf.}}
+    optional {{:{id} :record_isbn ?isbn.}}
+    optional {{:{id} :record_issn ?issn.}}
+    optional {{:{id} :record_journal ?journal.}}
+    optional {{:{id} :record_language ?language.}}
+    optional {{:{id} :record_number ?number.}}
+    optional {{:{id} :record_ogUri ?ogUri.}}
+    optional {{:{id} :record_other ?other.}}
+    optional {{:{id} :record_pagination ?pagination.}}
+    optional {{:{id} :record_peerReviewed ?peerReviewed.}}
+    optional {{:{id} :record_pmc ?pmc.}}
+    optional {{:{id} :record_pmid ?pmid.}}
+    optional {{:{id} :record_publicationStatus ?publicationStatus.}}
+    optional {{:{id} :record_publicationversion ?publicationversion.}}
+    optional {{:{id} :record_publisherVersion ?publisherVersion.}}
+    optional {{:{id} :record_relation ?relation.}}
+    optional {{:{id} :record_relationUri ?relationUri.}}
+    optional {{:{id} :record_rights ?rights.}}
+    optional {{:{id} :record_rightsUri ?rightsUri.}}
+    optional {{:{id} :record_slug ?slug.}}
+    optional {{:{id} :record_sponsorship ?sponsorship.}}
+    optional {{:{id} :record_tid ?tid.}}
+    optional {{:{id} :record_timestamp ?timestamp.}}
+    optional {{:{id} :record_title ?title.}}
+    optional {{:{id} :record_type ?type.}}
+    optional {{:{id} :record_uoei ?uoei.}}
+    optional {{:{id} :record_version ?version.}}
+    optional {{:{id} :record_volume ?volume.}}
     }}"""
+
+
+    jsonReponse = sparql_get_query(sparql_query)
+    result = jsonReponse["results"]["bindings"]
+    return result
+
+
+def getRelationsLst(query,rel):
+
+    jsonReponse = sparql_get_query(query)
+    res = jsonReponse["results"]["bindings"]
+    l = [{"id": f"{r[rel]['value'].split('/')[-1]}","name": r['name']['value'] if 'name' in r else ""} for r in res]
+    return l 
+
+
+def getRecordRelations(id):
 
     authors_query = f"""
     PREFIX : {prefix}
     select * where {{ 
     ?authors a :Author.
     optional{{?authors :contributor_name ?name}}.
-    ?authors :authored :{id_to_query}.
+    ?authors :authored :{id}.
     }}
 """
     editors_query = f"""
     PREFIX : {prefix}
     select * where {{ 
     ?editors a :Editor.
-    ?editors :edited :{id_to_query}.
+    optional{{?editors :contributor_name ?name}}.
+    ?editors :edited :{id}.
     }}
 """
     advisors_query = f"""
     PREFIX : {prefix}
     select * where {{ 
     ?advisors a :Advisor.
-    ?advisors :advised :{id_to_query}.
+    optional{{?advisors :contributor_name ?name}}.
+    ?advisors :advised :{id}.
     }}
 """
-    
     publisher_query = f"""
     PREFIX : {prefix}
     select * where {{ 
     ?publisher a :PublisherEntity.
-    ?publisher :published :{id_to_query}.
+    optional{{?publisher :publisher_name ?name}}.
+    ?publisher :published :{id}.
     }}
 """
-    
     others_query = f"""
     PREFIX : {prefix}
     select * where {{ 
     ?others a :Other.
-    ?others :contributed :{id_to_query}.
+    optional{{?others :contributor_name ?name}}.
+    ?others :contributed :{id}.
     }}
 """
     journals_query = f"""
     PREFIX : {prefix}
     select * where {{ 
     ?journals a :Journal.
-    ?journals :with_record :{id_to_query}.
+    optional{{?journals :journal_name ?name}}
+    ?journals :with_record :{id}.
     }}
 """
     departments_query = f"""
     PREFIX : {prefix}
     select * where {{ 
     ?departments a :Department.
-    ?departments :dep_has_rec :{id_to_query}.
+    optional{{?departments :department_name ?name}}
+    ?departments :dep_has_rec :{id}.
     }}
 """
     funders_query = f"""
     PREFIX : {prefix}
     select * where {{ 
     ?funders a :FundingEntity.
-    ?funders :funded :{id_to_query}.
+    optional{{?funders :funding_name ?name}}
+    ?funders :funded :{id}.
     }}
 """
+    
+    data = {}
+    data['authors'] = getRelationsLst(authors_query,'authors')
+    data['editors'] = getRelationsLst(editors_query,'editors')
+    data['advisors'] = getRelationsLst(advisors_query,'advisors')
+    data['publisher'] = getRelationsLst(publisher_query,'publisher')
+    data['others'] = getRelationsLst(others_query,'others')
+    data['journals'] = getRelationsLst(journals_query,'journals')
+    data['departments'] = getRelationsLst(departments_query,'departments')
+    data['funders'] = getRelationsLst(funders_query,'funders')
 
+    return data
 
-    jsonReponse = sparql_get_query(sparql_query)
-    result = jsonReponse["results"]["bindings"]
+@app.route('/record/<id>', methods=['GET'])
+def records(id):
+
+    id_to_query = f"record_{id}"
+
+    result = getRecordById(id_to_query)
+
     if result:
         recordFields = [(k,r['value']) for k,r in result[0].items()]
-        jsonReponse_authors = sparql_get_query(authors_query)
-        resultAuthors = jsonReponse_authors["results"]["bindings"]
-        authors = [{"id": f"{author['authors']['value'].split('/')[-1]}","name":f"{author['name']['value']}"} for author in resultAuthors]
-
-
-        return render_template('record.html', data={"recordFields":recordFields,"authors":authors})
+        data = getRecordRelations(id_to_query)
+        data['recordFields'] = recordFields
+        
+        return render_template('record.html', data=data)
     else:
 
         return render_template('empty.html', data=[])
@@ -463,9 +507,6 @@ INSERT DATA {{
     }}
 
 """
-    print(query)
-    # {uri} :contributed_by :contributor_0.
-    # {nl.join(triplos)}
     sparql_post_query(query)
     return redirect(url_for('actionsRecords'), code=303)
 
@@ -484,7 +525,6 @@ def listContributorsGET():
     result = jsonReponse["results"]["bindings"]
     if result:
         data = [( item["dep"]["value"].split("/")[-1], item["name"]["value"]) for item in result]
-        print(data)
         return render_template('listContributors.html', listContributors = data)
     else:
         return render_template('listContributors.html', data=[])
@@ -504,7 +544,6 @@ def listJournalsGET():
     result = jsonReponse["results"]["bindings"]
     if result:
         data = [( item["dep"]["value"].split("/")[-1], item["name"]["value"]) for item in result]
-        print(data)
         return render_template('listJournals.html', listJournals = data)
     else:
         return render_template('listJournals.html', data=[])
@@ -523,7 +562,6 @@ def listDepartmentsGET():
     result = jsonReponse["results"]["bindings"]
     if result:
         data = [( item["dep"]["value"].split("/")[-1], item["name"]["value"]) for item in result]
-        print(data)
         return render_template('listDepartments.html', listDepartments = data)
     else:
         return render_template('listDepartments.html', data=[])

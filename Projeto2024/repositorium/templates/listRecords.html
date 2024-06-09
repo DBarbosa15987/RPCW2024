@@ -7,6 +7,7 @@
     <title>GraphDB Data</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/navBar.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/filters.css') }}" />
 </head>
 <body>
 
@@ -14,80 +15,54 @@
         {% include 'sidebar.html' %}
     </div>
 
-<div style="margin-left:25%;padding:1px 16px;height:1000px;">
-
-    <div class="filters">
-        <h2>Filters</h2>
-        <form class="form_filters" action="listRecords" method="post">
-            <div class="input-group recordId">
-                <label for="recordId">Id:</label>
-                <input type="text" id="recordId" name="recordId">
-            </div>
-            <div class="input-group title">
-                <label for="title">Title:</label>
-                <input type="text" id="title" name="title">
-            </div>
-            <div class="input-group contributor">
-                <label for="contributor">Contributor:</label>
-                <input type="text" id="contributor" name="contributor">
-            </div>
-            <div class="input-group orderBy">
-                <label for="orderBy">Order by:</label>
-                <select name="orderBy" id="orderBy">
-                    <option value=""></option>
-                    <option value="alc">Alphabetic CRES</option>
-                    <option value="ald">Alphabetic DECRES</option>
-                    <option value="dc">Date CRES</option>
-                    <option value="dd">Date DECRES</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <input type="submit" value="🔎">
-            </div>
-        </form>
-    </div>
-    <div class="list">
+    <div class="content">
         <h1>List Record</h1>
         <h2>Results | {{ listRecords|length }}</h2>
 
-        <div class="sidebar">
-            {% include 'pagination.html' %}
+        <div class="filters">
+            {% include 'filters.html' %}
         </div>
 
-        <table id="listRecords">
-            <tr>
-                <th>ID Record</th>
-                <th>Title Record</th>
-                <th>Authors</th>
-                <th>Date Record</th>
-            </tr>
-            {% for record in listRecords %}
-            <tr id="recordId_{{ loop.index }}">
-                {% set record_id = record.id.value.replace("/", "_") %}
-                <td><a href="record/{{ record_id }}"> {{ record.id.value }} </a></td>
-                <td><a href="record/{{ record_id }}"> {{ record.title.value }} </a></td>
-                <td>
-                    {% for contributor, id in record.names %}
-                        {% if contributor.value != "" %}
-                            <a href="{{ id }}"> {{ contributor.value }} </a> | 
-                        {%else%}
-                            <a href="{{ id }}"> {{ id.value }} </a> | 
-                        {% endif %}
-                    {% endfor %}
-                </td>
-                <td>{{ record.timestamp.value }}</td>
-            </tr>
-        {% endfor %}
-        </table>
+        <div class="list">
 
-        <div class="sidebar">
-            {% include 'pagination.html' %}
+            <div class="pagination">
+                {% include 'pagination.html' %}
+            </div>
+
+            <table id="listRecords" class="tab_green">
+                <tr>
+                    <th>ID Record</th>
+                    <th>Title Record</th>
+                    <th>Authors</th>
+                    <th>Date Record</th>
+                </tr>
+                {% for record in listRecords %}
+                <tr id="recordId_{{ loop.index }}">
+                    {% set record_id = record.id.value.replace("/", "_") %}
+                    <td><a href="record/{{ record_id }}"> {{ record.id.value }} </a></td>
+                    <td><a href="record/{{ record_id }}"> {{ record.title.value }} </a></td>
+                    <td>
+                        {% for contributor, id in record.names %}
+                            {% if contributor.value != "" %}
+                                <a href="{{ id }}"> {{ contributor.value }} </a> | 
+                            {%else%}
+                                <a href="{{ id }}"> {{ id.value }} </a> | 
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>{{ record.timestamp.value }}</td>
+                </tr>
+            {% endfor %}
+            </table>
+
+            <div class="pagination">
+                {% include 'pagination.html' %}
+            </div>
+
         </div>
+
 
     </div>
-
-
-</div>
 
 </body>
 </html>

@@ -1,144 +1,124 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta charset="UTF-8"/>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GraphDB Data</title>
-    <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}"/>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/navBar.css') }}"/>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/navBar.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/filters.css') }}" />
     <!--<link rel="stylesheet" href="{{ url_for('static', filename='javascript/refresh.js') }}"/>-->
 </head>
+
 <body>
 
     <div class="sidebar">
         {% include 'sidebar.html' %}
     </div>
 
-<div style="margin-left:25%;padding:1px 16px;height:1000px;">
-
-    <div class="filters">
-        <h2>Filters</h2>
-        <form class="form_filters" action="actionsRecords" method="post">
-            <div class="input-group recordId">
-                <label for="recordId">Id:</label>
-                <input type="text" id="recordId" name="recordId">
-            </div>
-            <div class="input-group title">
-                <label for="title">Title:</label>
-                <input type="text" id="title" name="title">
-            </div>
-            <div class="input-group contributor">
-                <label for="contributor">Contributor:</label>
-                <input type="text" id="contributor" name="contributor">
-            </div>
-            <div class="input-group orderBy">
-                <label for="orderBy">Order by:</label>
-                <select name="orderBy" id="orderBy">
-                    <option value=""></option>
-                    <option value="alc">Alphabetic CRES</option>
-                    <option value="ald">Alphabetic DECRES</option>
-                    <option value="dc">Date CRES</option>
-                    <option value="dd">Date DECRES</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <input type="submit" value="🔎">
-            </div>
-        </form>
-    </div>
-    <div class="list">
-        <h1>List Record</h1>
-        <h2>Results | {{ listRecords|length }}</h2>
-        <a href="createRecord"> ➕ </a>
-        
-        <div class="sidebar">
-            {% include 'pagination.html' %}
+    <div class="content">
+        <div class="header-container">
+            <h1>List Record</h1>
+            <h2>Results | {{ listRecords|length }}</h2>
+        </div>
+        <div class="filters">
+            {% include 'filters.html' %}
         </div>
 
-        <table id="listRecords">
-            <tr>
-                <th> Actions </th>
-                <th>ID Record</th>
-                <th>Title Record</th>
-                <th>Authors</th>
-                <th>Date Record</th>
-            </tr>
-        {% for record in listRecords %}
-            {% set record_id = record.id.value.replace("/", "_") %}
-            <tr id="recordId_{{ loop.index }}">
-                <td>
-                    <button type="button" class="deleteButton" data-id="{{ record_id }}">🗑️</button>
-                    <button type="button" class="editButton" data-id="{{ record_id }}">✏️</button>
-                </td>
-                <td><a href="record/{{ record_id }}"> {{ record.id.value }} </a></td>
-                <td><a href="record/{{ record_id }}"> {{ record.title.value }} </a></td>
-                <td>
-                {% for contributor, id in record.names %}
+        <div class="list">
+            <div class="button-container">
+                <a href="createRecord" class="createButton"> ➕ </a>
+            </div>
+
+            <div class="pagination">
+                {% include 'pagination.html' %}
+            </div>
+
+            <table id="listRecords" class="tab_green">
+                <tr>
+                    <th> Actions </th>
+                    <th>ID Record</th>
+                    <th>Title Record</th>
+                    <th>Authors</th>
+                    <th>Date Record</th>
+                </tr>
+                {% for record in listRecords %}
+                {% set record_id = record.id.value.replace("/", "_") %}
+                <tr id="recordId_{{ loop.index }}">
+                    <td>
+                        <button type="button" class="deleteButton" data-id="{{ record_id }}">🗑️</button>
+                        <button type="button" class="editButton" data-id="{{ record_id }}">✏️</button>
+                    </td>
+                    <td><a href="record/{{ record_id }}"> {{ record.id.value }} </a></td>
+                    <td><a href="record/{{ record_id }}"> {{ record.title.value }} </a></td>
+                    <td>
+                        {% for contributor, id in record.names %}
+                        {% endfor %}
+                    </td>
+                    <td>{{ record.timestamp.value }}</td>
+                </tr>
                 {% endfor %}
-                </td>
-                <td>{{ record.timestamp.value }}</td>
-            </tr>
-        {% endfor %}
-        </table>
+            </table>
 
-        <div class="sidebar">
-            {% include 'pagination.html' %}
+            <div class="pagination">
+                {% include 'pagination.html' %}
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    document.querySelectorAll('.deleteButton').forEach(button => {
-        button.addEventListener('click', function() {
-            const recordId = this.getAttribute('data-id');
+    <script>
+        document.querySelectorAll('.deleteButton').forEach(button => {
+            button.addEventListener('click', function () {
+                const recordId = this.getAttribute('data-id');
 
-            fetch(`/recordDelete/${recordId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => {
-                if (response.ok) {
-                location.reload();
-            } else {
-                alert('Failed to delete the record');
-            }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while deleting the record');
+                fetch(`/recordDelete/${recordId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            alert('Failed to delete the record');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while deleting the record');
+                    });
             });
         });
-    });
 
-    document.querySelectorAll('.editButton').forEach(button => {
-        button.addEventListener('click', function() {
-            const recordId = this.getAttribute('data-id');
+        document.querySelectorAll('.editButton').forEach(button => {
+            button.addEventListener('click', function () {
+                const recordId = this.getAttribute('data-id');
 
-            fetch(`/recordEdit/${recordId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => {
-                if (response.ok) {
-                    alert('Record updated successfully');
-                } else {
-                    alert('Failed to update the record');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while updating the record');
+                fetch(`/recordEdit/${recordId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            alert('Record updated successfully');
+                        } else {
+                            alert('Failed to update the record');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while updating the record');
+                    });
             });
         });
-    });
-</script>
-
+    </script>
 
 </body>
+
 </html>

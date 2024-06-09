@@ -1,26 +1,80 @@
+:root {
+    --white: #EEEEEE;
+    --whiteTwo: #fbfbeb;
+  
+    --colorOne: #f9f7dc;
+    --colorTwo: #dad7cd;
+    --colorThree: #a3b18a;
+    --colorFour: #588157;
+    --colorFive: #3a5a40;
+    --colorSix: #344e41;
+
+    --greyOne: #555;
+    --greyTwo: gainsboro;
+    --black: #000000;
+  }
+
 .filters {
-    border-radius: 25px;
-    background: #effcff;
-    padding: 20px;
-    width: 200px;
-    height: 150px; 
+    padding: 5px 20px 20px 20px;
+    border: 1px solid ;
+    border-radius: 5px;
+    margin-bottom:20px;
 }
 
-.form_filters {
+.filters .form_filters {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 20px;
 }
-.form_filters .input-group {
+
+.filters .input-group {
     display: flex;
     flex-direction: column;
 }
-.form_filters .input-group.author {
-    flex: 2;
+
+.filters .input-group.recordId {
+    flex: 1 1;
+    /* 1/4 of the space */
 }
-.form_filters .input-group.recordId {
-    flex: 1;
+
+.filters .input-group.title {
+    flex: 3 1;
+    /* 3/4 of the space */
 }
-.form_filters input[type="text"], .form_filters select {
+
+.filters .input-group.contributor {
+    flex: 1 1;
+    /* Full width */
+}
+
+.filters .input-group.orderBy {
+    flex: 1 1 ;
+    /* 50% of the space */
+}
+
+.filters .input-group input[type="text"],
+.filters .input-group select {
     width: 100%;
+    padding: 8px;
+    border: 1px solid var(--greyTwo);
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.filters .input-group input[type="submit"] {
+    padding: 10px 20px;
+    background-color: var(--colorFour);
+    color: var(--white);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.filters .input-group input[type="submit"]:hover {
+    background-color: var(--greyTwo);
+}
+
+.filters .input-group input[type="submit"]:active {
+    background-color: #004494;
 }
