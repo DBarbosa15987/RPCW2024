@@ -47,6 +47,8 @@
                 {% set record_id = record.id.value.replace("/", "_") %}
                 <tr id="recordId_{{ loop.index }}">
                     <td>
+                        <a href="updateRecord/{{ record_id }}" >✏️</a>
+
                         <button type="button" class="deleteButton" data-id="{{ record_id }}">🗑️</button>
                         <button type="button" class="editButton" data-id="{{ record_id }}">✏️</button>
                     </td>
@@ -92,30 +94,31 @@
             });
         });
 
-        document.querySelectorAll('.editButton').forEach(button => {
-            button.addEventListener('click', function () {
-                const recordId = this.getAttribute('data-id');
+        document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.editButton').forEach(button => {
+        button.addEventListener('click', function () {
+            const recordId = this.getAttribute('data-id');
 
-                fetch(`/recordEdit/${recordId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                })
-                    .then(response => {
-                        if (response.ok) {
-                            alert('Record updated successfully');
-                        } else {
-                            alert('Failed to update the record');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred while updating the record');
-                    });
+            fetch(`/updateRecord/${recordId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.text(); // Expecting an HTML response
+                } else {
+                    throw new Error('Failed to change the page');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the record');
             });
         });
+    });
+});
     </script>
 
 </body>

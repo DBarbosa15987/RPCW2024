@@ -1,9 +1,87 @@
-from flask import Flask, request, jsonify,render_template,url_for, redirect
+from flask import Flask, request, render_template,url_for, redirect,make_response
 from SPARQLWrapper import SPARQLWrapper, JSON
 import requests
+import json
 from datetime import datetime
 
 app = Flask(__name__)
+
+record_fields = {
+    "id":"record_id",
+    "timestamp":"record_timestamp",
+    "abstract":"record_abstract",
+    "alternativeTitle":"record_alternativeTitle",
+    "articlenumber":"record_articlenumber",
+    "bookTitle":"record_bookTitle",
+    "citation":"record_citation",
+    "citationConferenceDate":"record_citationConferenceDate",
+    "citationConferencePlace":"record_citationConferencePlace",
+    "citationEdition":"record_citationEdition",
+    "citationEndPage":"record_citationEndPage",
+    "citationIssue":"record_citationIssue",
+    "citationStartPage":"record_citationStartPage",
+    "citationTitle":"record_citationTitle",
+    "citationVolume":"record_citationVolume",
+    "comments":"record_comments",
+    "conferencePublication":"record_conferencePublication",
+    "dateEmbargo":"record_dateEmbargo",
+    "dateIssued":"record_dateIssued",
+    "degre_grade":"record_degre_grade",
+    "degree_grantor":"record_degree_grantor",
+    "description":"record_description",
+    "doi":"record_doi",
+    "eisbn":"record_eisbn",
+    "eissn":"record_eissn",
+    "embargoFct":"record_embargoFct",
+    "eventLocation":"record_eventLocation",
+    "eventTitle":"record_eventTitle",
+    "eventType":"record_eventType",
+    "export":"record_export",
+    "exportIdentifier":"record_exportIdentifier",
+    #"fundingAward":"record_fundingAward",
+    #"fundingStream":"record_fundingStream",
+    "hasVersion":"record_hasVersion",
+    "isBasedOn":"record_isBasedOn",
+    "isPartOfSeries":"record_isPartOfSeries",
+    "isVersionOf":"record_isVersionOf",
+    "isbn":"record_isbn",
+    "issn":"record_issn",
+    "journal":"record_journal",
+    "language":"record_language",
+    "number":"record_number",
+    "ogUri":"record_ogUri",
+    "other":"record_other",
+    "pagination":"record_pagination",
+    "peerReviewed":"record_peerReviewed",
+    "pmc":"record_pmc",
+    "pmid":"record_pmid",
+    "publicationStatus":"record_publicationStatus",
+    "publicationversion":"record_publicationversion",
+    "publisherVersion":"record_publisherVersion",
+    "relation":"record_relation",
+    "relationUri":"record_relationUri",
+    "rights":"record_rights",
+    "rightsUri":"record_rightsUri",
+    "slug":"record_slug",
+    "sponsorship":"record_sponsorship",
+    "tid":"record_tid",
+    "title":"record_title",
+    "type":"record_type",
+    "uoei":"record_uoei",
+    "version":"record_version",
+    "volume":"record_volume",
+}
+
+record_relations = {
+    "publishers": ("published_by","published_"),
+    "authors": ("authored_by","authored"),
+    "advisors": ("advised_by","advised"),
+    "editors": ("edited_by","edited"),
+    "others": ("contributed_by","contributed"),
+    "departments": ("in_dep","dep_has_rec"),
+    "journals": ("in_journal","with_record"),
+    "fundingEnts": ("funded_by","funded")
+}
 
 # data do sistema em formato ANSI ISO
 data_hora_atual = datetime.now()
@@ -27,6 +105,7 @@ def filter_switch():
     elif current_route == "/actionsRecords":
         current_filter_route = "actionsRecords"
 
+
 def sparql_get_query(query):
     sparql = SPARQLWrapper(graphdb_endpoint)
     sparql.setMethod("GET")
@@ -42,8 +121,6 @@ def sparql_post_query(query):
     sparql.setReturnFormat(JSON)
     return sparql.query().convert()
 
-def search(query):
-    pass
 
 def listRecordsGET( page_to_render = 'listRecords.html'):
     global limit, current_filter_route
@@ -99,12 +176,90 @@ SELECT * WHERE {{
                     curr['names'] = [(r['name'],id)]
         data.append(curr)
         count = countResult[0].get('count')
-
+        print(data)
+        with open("debugDumpQuery.json",'w') as f:
+            json.dump(data,f,indent=4,ensure_ascii=False)
         filter_switch()
 
         return render_template(page_to_render, listRecords=data, page = page, count=count, filter_route=current_filter_route)
     else:
         return render_template(page_to_render, data=[])
+
+
+def getAllRelations():
+
+    query_authors = f"""
+    PREFIX : {prefix}
+    SELECT DISTINCT ?authors ?name WHERE {{
+        ?r :authored_by ?authors.
+        ?authors :contributor_name ?name.
+    }}
+
+    """
+    query_editors = f"""
+    PREFIX : {prefix}
+    SELECT DISTINCT ?editors ?name WHERE {{
+        ?r :edited_by ?editors.
+        ?editors :contributor_name ?name.
+
+    }}
+    """
+    query_advisors = f"""
+    PREFIX : {prefix}
+    SELECT DISTINCT ?advisors ?name WHERE {{
+        ?r :advised_by ?advisors.
+        ?advisors :contributor_name ?name.
+
+    }}
+    """
+    query_publisher = f"""
+    PREFIX : {prefix}
+    SELECT DISTINCT ?publisher ?name WHERE {{
+        ?r :published_by ?publisher.
+        ?publisher :publisher_name ?name.
+
+    }}
+    """
+    query_others = f"""
+    PREFIX : {prefix}
+    SELECT DISTINCT ?others ?name WHERE {{
+        ?oters a :Other.
+        ?r :contrubuted_by ?others.
+        ?others :contributor_name ?name.
+
+    }}
+    """
+    query_journals = f"""
+    PREFIX : {prefix}
+    SELECT DISTINCT ?journals ?name WHERE {{
+        ?r :in_journal ?journals.
+        ?journals :journal_name ?name.
+    }}
+    """
+    query_departments = f"""
+    PREFIX : {prefix}
+    SELECT DISTINCT ?departments ?name WHERE {{
+        ?r :in_dep ?departments.
+        ?departments :department_name ?name.
+    }}
+    """
+    query_funders = f"""
+    PREFIX : {prefix}
+    SELECT DISTINCT ?funders ?name WHERE {{
+        ?r :funded_by ?funders.
+        ?funders :funding_name ?name.
+    }}
+    """
+    data = {}
+    data["authors"] = getRelationsLst(query_authors,"authors")
+    data["editors"] = getRelationsLst(query_editors,"editors")
+    data["advisors"] = getRelationsLst(query_advisors,"advisors")
+    data["publisher"] = getRelationsLst(query_publisher,"publisher")
+    data["others"] = getRelationsLst(query_others,"others")
+    data["journals"] = getRelationsLst(query_journals,"journals")
+    data["departments"] = getRelationsLst(query_departments,"departments")
+    data["funders"] = getRelationsLst(query_funders,"funders")
+    return data
 
 
 def listRecordsPOST(form, page_to_render = 'listRecords.html'):
@@ -200,11 +355,37 @@ def listRecordsPOST(form, page_to_render = 'listRecords.html'):
         data.append(curr)
 
         filter_switch()
-        print(f"{current_route} - {current_filter_route}")
-
         return render_template(page_to_render, listRecords=data, fr = current_filter_route)
     else:
         return render_template(page_to_render, data=[])
+
+
+def getTriplosUpdate(id,form):
+
+    triplosInsert = []
+    triplosDelete = []
+
+    for r in record_fields:
+        if form.get(r)!=None:
+            triplosInsert.append(f':{id} :{record_fields[r]} "{form[r]}".')
+            # triplosDelete.append(f":{id} :{record_fields[r]} ?{r}.")
+            triplosDelete.append(f":{id} :{record_fields[r]} ?o.")
+    for r in record_relations:
+        if form.get(r)!=None:
+            triplosInsert.append(f':{id} :{record_relations[r][0]} "{form["r"].split("-")[0].strip()}".')    
+            triplosInsert.append(f'"{form["r"].split("-")[0].strip()}" :{record_relations[r][1]} :{id}.')
+            # values = form[r].split(';')
+            # for value in values:
+            #     triplosInsert.append(f':{id} :{record_relations[r][0]} "{value}".')
+            #     triplosInsert.append(f'"{value}" :{record_relations[r][1]} :{id}.')
+            
+            # triplosDelete.append(f":{id} :{record_relations[r][0]} ?{r}.")
+            # triplosDelete.append(f"?{r} :{record_relations[r][1]} :{id}.")
+
+            triplosDelete.append(f":{id} :{record_relations[r][0]} ?o.")
+            triplosDelete.append(f"?o :{record_relations[r][1]} :{id}.")
+        
+    return triplosInsert,triplosDelete
 
 
 def getRecordById(id):
@@ -215,6 +396,9 @@ def getRecordById(id):
     PREFIX : {prefix}
     select * where {{ 
     :{id} a :Record.
+    optional {{:{id} :record_id ?id.}}
+    optional {{:{id} :record_timestamp ?timestamp.}}
+    optional {{:{id} :record_title ?title.}}
     optional {{:{id} :record_abstract ?abstract.}}
     optional {{:{id} :record_alternativeTitle ?alternativeTitle.}}
     optional {{:{id} :record_articlenumber ?articlenumber.}}
@@ -247,7 +431,6 @@ def getRecordById(id):
     #optional {{:{id} :record_fundingAward ?fundingAward.}}
     #optional {{:{id} :record_fundingStream ?fundingStream.}}
     optional {{:{id} :record_hasVersion ?hasVersion.}}
-    optional {{:{id} :record_id ?id.}}
     optional {{:{id} :record_isBasedOn ?isBasedOn.}}
     optional {{:{id} :record_isPartOfSeries ?isPartOfSeries.}}
     optional {{:{id} :record_isVersionOf ?isVersionOf.}}
@@ -272,8 +455,6 @@ def getRecordById(id):
     optional {{:{id} :record_slug ?slug.}}
     optional {{:{id} :record_sponsorship ?sponsorship.}}
     optional {{:{id} :record_tid ?tid.}}
-    optional {{:{id} :record_timestamp ?timestamp.}}
-    optional {{:{id} :record_title ?title.}}
     optional {{:{id} :record_type ?type.}}
     optional {{:{id} :record_uoei ?uoei.}}
     optional {{:{id} :record_version ?version.}}
@@ -389,9 +570,7 @@ def records(id):
     else:
         return render_template('empty.html', data=[])
 
-#/recordDelete/${recordId}
 @app.route('/recordDelete/<id>', methods=['DELETE'])
-#@app.route('/record/<id>', methods=['GET'])
 def deleteRecord(id):
     id_to_delete = f"record_{id}"
     print(f"DELETED ID:{id_to_delete}")
@@ -436,7 +615,6 @@ def getTriplosMultiplos(type,record_uri,type_uri):
 {record_uri} :advised_by :{type_uri}.
 :{type_uri} :advised {record_uri}.
 """
-
         case "editors":
             query = f"""
 {record_uri} :edited_by :{type_uri}.
@@ -480,10 +658,10 @@ def createRecordPOST(form):
     
     uri = f":record_0000_{i}"
     id = f"0000/{i}"
-    line_alTitle,line_issn,line_doi = "","",""
+    #line_alTitle,line_issn,line_doi = "","",""
     
     relations = ["authors","editors","advisors","journals","departments","publishers","fundingEnts"]
-    triplos = []
+    triplos,_ = getTriplosUpdate(id,form)
     for rel in relations:
         relLst = form.get(rel) #contributor_0; contributor_1; contributor_2
         if relLst:
@@ -492,15 +670,15 @@ def createRecordPOST(form):
                 triplos.append(getTriplosMultiplos(rel,uri,r))
 
 
-    if alTitle and alTitle != "":
-        line_alTitle = f'{uri} :record_alternativeTitle "{alTitle}".'
-        triplos.append(line_alTitle)
-    if issn and issn != "":
-        line_issn = f'{uri} :record_issn "{issn}".'
-        triplos.append(line_issn)
-    if doi and doi != "":
-        line_doi = f'{uri} :record_doi "{doi}".'
-        triplos.append(line_doi)
+    # if alTitle and alTitle != "":
+    #     line_alTitle = f'{uri} :record_alternativeTitle "{alTitle}".'
+    #     triplos.append(line_alTitle)
+    # if issn and issn != "":
+    #     line_issn = f'{uri} :record_issn "{issn}".'
+    #     triplos.append(line_issn)
+    # if doi and doi != "":
+    #     line_doi = f'{uri} :record_doi "{doi}".'
+    #     triplos.append(line_doi)
 
     data_hora_atual = datetime.now()
     data_iso_formatada = data_hora_atual.strftime('%Y-%m-%dT%H:%M:%S+00:00')
@@ -523,6 +701,47 @@ INSERT DATA {{
     sparql_post_query(query)
     return redirect(url_for('actionsRecords'), code=303)
 
+
+def updateRecordGET(id):
+    id_to_query = f"record_{id}"
+    result = getRecordById(id_to_query)
+    if result:
+        recordFields = [(k, r['value']) for k, r in result[0].items()]
+        data = getRecordRelations(id_to_query)
+        data['recordFields'] = recordFields
+        print(id_to_query)
+        allData = getAllRelations()
+        return render_template('updateRecord.html', data=data, allData=allData,id=id)
+    else:
+        return render_template('empty.html')
+
+        
+def updateRecordPOST(id,form):
+
+    nl = "\n"
+    id_to_query = f"record_{id}"
+    triplosInserir,triplosApagar = getTriplosUpdate(id_to_query,form)
+    data_hora_atual = datetime.now()
+    data_iso_formatada = data_hora_atual.strftime('%Y-%m-%dT%H:%M:%S+00:00')
+    triplosInserir.append(f':{id_to_query} :record_timestamp "{data_iso_formatada}"^^xsd:dateTime.')
+    triplosApagar.append(f':{id_to_query} :record_timestamp ?o.')
+
+    query = f"""
+    PREFIX : {prefix}
+    DELETE {{
+        {nl.join(triplosApagar)}
+    }}
+    INSERT {{
+        {nl.join(triplosInserir)}
+    }}
+    WHERE {{
+        :{id_to_query} ?p ?o .
+}}
+"""
+
+    sparql_post_query(query)
+    print(query)
+    return redirect(url_for('actionsRecords'), code=303)
 
 def listContributorsGET():
     query = """
@@ -620,8 +839,6 @@ def previousPage():
     elif current_route == "/actionsRecords":
         return redirect(url_for('actionsRecords'), code=303)
 
-    #return redirect(url_for(current_route), code=303)
-
 @app.route('/listRecords', methods=['POST','GET'])
 def listRecords():
     global current_route, page, reset
@@ -675,7 +892,7 @@ def createRecord():
     elif request.method == 'POST':
         return createRecordPOST(request.form)
 
-@app.route("/actionsRecords",methods={'GET','POST'})
+@app.route("/actionsRecords",methods=['GET','POST'])
 def actionsRecords():
     global current_route, page
     current_route = "/actionsRecords"
@@ -684,9 +901,35 @@ def actionsRecords():
     elif request.method == 'POST':
         return listRecordsPOST(request.form, page_to_render='actions_records.html')
 
+@app.route("/updateRecord/<id>", methods=['GET','POST'])
+def updateRecord(id):
+   if request.method == 'GET':
+       return updateRecordGET(id)
+   elif request.method == 'POST':
+       return updateRecordPOST(id,request.form)
+    
+    
+
+@app.route("/recordEdit/<id>",methods={'POST'})
+def recordEdit(id):
+    global current_route, page
+    current_route = "/updateRecord"
+    if request.method == 'POST':
+        return redirect(url_for(f'updateRecord/{id}'), code=303)
+
+
 @app.route('/')
 def index():
     return render_template('index.html', data = {"data": data_iso_formatada})
+
+@app.route("/temp", methods=["POST", "GET"]) 
+def home(): 
+    if request.method == "GET": 
+        languages = [("C++",1), ("Python",2), ("PHP",3), ("Java",4), ("C",5), ("Ruby",6), 
+                     ("R",7), ("C#",8), ("Dart",9), ("Fortran",10), ("Pascal",11), ("Javascript",12)] 
+          
+        return render_template("temp.html", languages=languages) 
+  
 
 
 if __name__ == '__main__':

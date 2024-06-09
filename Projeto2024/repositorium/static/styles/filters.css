@@ -10,6 +10,7 @@
     --colorSix: #344e41;
 
     --greyOne: #555;
+    --greyThree: #7f7f7f;
     --greyTwo: gainsboro;
     --black: #000000;
   }
@@ -63,7 +64,7 @@
 
 .filters .input-group input[type="submit"] {
     padding: 10px 20px;
-    background-color: var(--colorFour);
+    background-color: var(--greyTwo);
     color: var(--white);
     border: none;
     border-radius: 5px;
@@ -72,9 +73,9 @@
 }
 
 .filters .input-group input[type="submit"]:hover {
-    background-color: var(--greyTwo);
+    background-color: var(--greyThree);
 }
 
 .filters .input-group input[type="submit"]:active {
-    background-color: var(--colorSix);
+    background-color: var(----greyThree);
 }

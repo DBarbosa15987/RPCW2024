@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GraphDB Data</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/navBar.css') }}" />
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/creater.css') }}" />
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.js">
+    </script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.js">
+    </script>
+
+    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/ui-lightness/jquery-ui.css" rel="stylesheet"
+        type="text/css" />
+
+
+</head>
+
+<body>
+    <div class="sidebar">
+        {% include 'sidebar.html' %}
+    </div>
+
+    <div class="content">
+        <p></p>       
+        <h1>Update a Record</h1>
+        <form method="Post" autocomplete="off" action="/updateRecord/{{id}}">
+            <div>
+                {% for field in data.recordFields %}
+                <div>
+                    <label for="{{ field[0] }}">{{ field[0].capitalize() }}:</label>
+                    {% if field[0].capitalize() != "Id" and field[0].capitalize() != "Timestamp" %}
+                    <input type="text" id="{{ field[0] }}" value="{{ field[1] }}" name="{{ field[0] }}">
+                    {% else %}
+                    <input type="text" id="{{ field[0] }}" value="{{ field[1] }}" name="{{ field[0] }}" disabled>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% set auth = data.authors | map(attribute='name') | join(';') %}
+
+                <div>
+                    <label for="author">Authors:</label>
+                    <!--<input type="text" id="author" value="{{ auth }}" name="author">-->
+                    <input type="text" id="author" name="author" placeholder="{{auth}}"> 
+                </div>
+
+                <div>
+                    <label for="editor">Editor:</label>
+                    <input type="text" id="editor" placeholder="{{ data.editors }}" name="editor">
+                </div>
+
+                <div>
+                    <label for="advisor">Advisor:</label>
+                    <input type="text" id="advisor" value="{{ data.advisors }}" name="advisor">
+                </div>
+
+                <div>
+                    <label for="department">Department:</label>
+                    <input type="text" id="department" value="{{ data.departments }}" name="department">
+                </div>
+
+                <div>
+                    <label for="journal">Journal:</label>
+                    <input type="text" id="journal" value="{{ data.journals }}" name="journal">
+                </div>
+
+                <div>
+                    <label for="publisher">Publisher:</label>
+                    <input type="text" id="publisher" value="{{ data.publisher }}" name="publisher">
+                </div>
+
+                <div>
+                    <label for="fundingEnt">Funding Entity:</label>
+                    <input type="text" id="fundingEnt" value="{{ data.funders }}" name="fundingEnt">
+                </div>
+            </div>
+            <input type="submit" value="Update Record">
+        </form>
+    </div>
+
+    <script>
+        $(function () {
+            var availableTags = [
+                {% for value in allData.authors %} 
+            "{{value.id}} - {{value.name}}",
+            {% endfor %} 
+    ];
+        $("#author").autocomplete({
+            source: availableTags
+        }); 
+  } );
+
+  $(function () {
+            var availableTags = [
+                {% for value in allData.editors %} 
+            "{{value.id}} - {{value.name}}",
+            {% endfor %} 
+    ];
+        $("#editor").autocomplete({
+            source: availableTags
+        }); 
+  } );
+
+  $(function () {
+            var availableTags = [
+                {% for value in allData.advisors %} 
+            "{{value.id}} - {{value.name}}",
+            {% endfor %} 
+    ];
+        $("#advisor").autocomplete({
+            source: availableTags
+        }); 
+  } );
+
+  $(function () {
+            var availableTags = [
+                {% for value in allData.departments %} 
+            "{{value.id}} - {{value.name}}",
+            {% endfor %} 
+    ];
+        $("#department").autocomplete({
+            source: availableTags
+        }); 
+  } );
+
+  $(function () {
+            var availableTags = [
+                {% for value in allData.journals %} 
+            "{{value.id}} - {{value.name}}",
+            {% endfor %} 
+    ];
+        $("#journal").autocomplete({
+            source: availableTags
+        }); 
+  } );
+
+
+  $(function () {
+            var availableTags = [
+                {% for value in allData.publisher %} 
+            "{{value.id}} - {{value.name}}",
+            {% endfor %} 
+    ];
+        $("#publisher").autocomplete({
+            source: availableTags
+        }); 
+  } );
+
+
+  $(function () {
+            var availableTags = [
+                {% for value in allData.funders %} 
+            "{{value.id}} - {{value.name}}",
+            {% endfor %} 
+    ];
+        $("#fundingEnt").autocomplete({
+            source: availableTags
+        }); 
+  } );
+
+
+    </script>
+</body>
+
+</html>

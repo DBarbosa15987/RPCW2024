@@ -54,40 +54,97 @@
 
             <br><br><br><hr>
             <h3>Editors</h3>
-            <table class="tab_green">
-                <tr>
-                    <th>Editor Id</th>
-                    <th>Editor Name</th>
-                </tr>
-                {% for key in data.editors %}
-                <tr>
-                    <td> <b> {{key.id}} </b> </td>
-                    {%if key.name != ""%}
-                        <td> {{ key.name }}</td>
-                    {%else%}
-                        <td> --- </td>
-                    {%endif%}
-                </tr>
-            {% endfor %}
+            {%if data.editors != []%}
+                <table class="tab_green">
+                    <tr>
+                        <th>Editor Id</th>
+                        <th>Editor Name</th>
+                    </tr>
+                    {% for key in data.editors %}
+                    <tr>
+                        <td> <b> {{key.id}} </b> </td>
+                        {%if key.name != ""%}
+                            <td> {{ key.name }}</td>
+                        {%else%}
+                            <td> --- </td>
+                        {%endif%}
+                    </tr>
+                {% endfor %}
+                </table>
+            {%else%}
+                <p><b>No editors associated.</b></p>
+            {%endif%}
 
             <br><br><br><hr>
             <h3>Advisors</h3>
-            <table class="tab_green">
-                <tr>
-                    <th>Advisor Id</th>
-                    <th>Advisor Name</th>
-                </tr>
-                {% for key in data.advisors %}
-                <tr>
-                    <td> <b> {{key.id}} </b> </td>
-                    {%if key.name != ""%}
-                        <td> {{ key.name }}</td>
-                    {%else%}
-                        <td> --- </td>
-                    {%endif%}
-                </tr>
+            {%if data.advisors != []%}
+                <table class="tab_green">
+                    <tr>
+                        <th>Advisor Id</th>
+                        <th>Advisor Name</th>
+                    </tr>
+                    {% for key in data.advisors %}
+                    <tr>
+                        <td> <b> {{key.id}} </b> </td>
+                        {%if key.name != ""%}
+                            <td> {{ key.name }}</td>
+                        {%else%}
+                            <td> --- </td>
+                        {%endif%}
+                    </tr>
+                {% endfor %}
+                </table>
+            {%else%}
+                <p><b>No advisors associated.</b></p>
+            {%endif%}
+
+            <br><br><br><hr>
+            <h3>Departments</h3>
+            {%if data.departments != []%}
+                <table class="tab_green">
+                    <tr>
+                        <th>Department Id</th>
+                        <th>Department Name</th>
+                    </tr>
+                    {% for key in data.departments %}
+                    <tr>
+                        <td> <b> {{key.id}} </b> </td>
+                        {%if key.name != ""%}
+                            <td> {{ key.name }}</td>
+                        {%else%}
+                            <td> --- </td>
+                        {%endif%}
+                    </tr>
+                </table>
             {% endfor %}
-            </table>
+            {%else%}
+                <p><b>No departments associated.</b></p>
+            {%endif%}
+
+            <br><br><br><hr>
+            <h3>Journals</h3>
+            {%if data.journals != []%}
+                <table class="tab_green">
+                    <tr>
+                        <th>Journal Id</th>
+                        <th>Journal Name</th>
+                    </tr>
+                    {% for key in data.journals %}
+                    <tr>
+                        <td> <b> {{key.id}} </b> </td>
+                        {%if key.name != ""%}
+                            <td> {{ key.name }}</td>
+                        {%else%}
+                            <td> --- </td>
+                        {%endif%}
+                    </tr>
+                {% endfor %}
+                </table>
+            {%else%}
+                <p><b>No journals associated.</b></p>
+            {%endif%}
+
+
 
 
         </div>
