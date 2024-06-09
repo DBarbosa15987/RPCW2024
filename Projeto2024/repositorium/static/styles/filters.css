@@ -76,5 +76,5 @@
 }
 
 .filters .input-group input[type="submit"]:active {
-    background-color: #004494;
+    background-color: var(--colorSix);
 }

@@ -18,6 +18,14 @@ page = 1
 reset = True
 
 current_route = ""
+current_filter_route = ""
+
+def filter_switch():
+    global current_route, current_filter_route
+    if current_route == "/listRecords":
+        current_filter_route = "listRecords"
+    elif current_route == "/actionsRecords":
+        current_filter_route = "actionsRecords"
 
 def sparql_get_query(query):
     sparql = SPARQLWrapper(graphdb_endpoint)
@@ -38,7 +46,7 @@ def search(query):
     pass
 
 def listRecordsGET( page_to_render = 'listRecords.html'):
-    global limit
+    global limit, current_filter_route
     query = f"""
     PREFIX : {prefix}
 SELECT * WHERE {{ 
@@ -91,12 +99,15 @@ SELECT * WHERE {{
                     curr['names'] = [(r['name'],id)]
         data.append(curr)
         count = countResult[0].get('count')
-        return render_template(page_to_render, listRecords=data, page = page, count=count)
+
+        filter_switch()
+
+        return render_template(page_to_render, listRecords=data, page = page, count=count, filter_route=current_filter_route)
     else:
         return render_template(page_to_render, data=[])
 
 
-def listRecordsPOST(form):
+def listRecordsPOST(form, page_to_render = 'listRecords.html'):
     record_id = form.get('recordId')
     title = form.get('title')
     contributor = form.get('contributor')
@@ -188,9 +199,12 @@ def listRecordsPOST(form):
 
         data.append(curr)
 
-        return render_template('actions_records.html', listRecords=data)
+        filter_switch()
+        print(f"{current_route} - {current_filter_route}")
+
+        return render_template(page_to_render, listRecords=data, fr = current_filter_route)
     else:
-        return render_template('actions_records.html', data=[])
+        return render_template(page_to_render, data=[])
 
 
 def getRecordById(id):
@@ -373,7 +387,6 @@ def records(id):
         
         return render_template('record.html', data=data)
     else:
-
         return render_template('empty.html', data=[])
 
 #/recordDelete/${recordId}
@@ -665,12 +678,11 @@ def createRecord():
 @app.route("/actionsRecords",methods={'GET','POST'})
 def actionsRecords():
     global current_route, page
+    current_route = "/actionsRecords"
     if request.method == 'GET':
-        current_route = "/actionsRecords"
         return listRecordsGET(page_to_render='actions_records.html')
     elif request.method == 'POST':
-        return listRecordsPOST(request.form)
-
+        return listRecordsPOST(request.form, page_to_render='actions_records.html')
 
 @app.route('/')
 def index():

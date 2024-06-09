@@ -19,15 +19,14 @@
     </div>
 
     <div class="content">
-        <div class="header-container">
-            <h1>List Record</h1>
-            <h2>Results | {{ listRecords|length }}</h2>
-        </div>
+        <h1>List Record</h1>
+    
         <div class="filters">
             {% include 'filters.html' %}
         </div>
 
         <div class="list">
+            <h2>Results | {{ listRecords|length }}</h2>
             <div class="button-container">
                 <a href="createRecord" class="createButton"> ➕ </a>
             </div>

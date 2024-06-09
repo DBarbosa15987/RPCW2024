@@ -18,8 +18,7 @@
 
     <div class="content">
         <div class="list">
-            <h1>List Records</h1>
-            <h2>Results</h2>
+            <h1>Record Details</h1>
             <h3>Properties</h3>
             <table id="listRecords" class="tab_green">
                 <tr>
@@ -37,6 +36,10 @@
             <br><br><br><hr>
             <h3>Authors</h3>
             <table class="tab_green">
+                <tr>
+                    <th>Author Id</th>
+                    <th>Author Name</th>
+                </tr>
                 {% for key in data.authors %}
                 <tr>
                     <td> <b> {{key.id}} </b> </td>
@@ -48,6 +51,45 @@
                 </tr>
                 {% endfor %}
             </table>
+
+            <br><br><br><hr>
+            <h3>Editors</h3>
+            <table class="tab_green">
+                <tr>
+                    <th>Editor Id</th>
+                    <th>Editor Name</th>
+                </tr>
+                {% for key in data.editors %}
+                <tr>
+                    <td> <b> {{key.id}} </b> </td>
+                    {%if key.name != ""%}
+                        <td> {{ key.name }}</td>
+                    {%else%}
+                        <td> --- </td>
+                    {%endif%}
+                </tr>
+            {% endfor %}
+
+            <br><br><br><hr>
+            <h3>Advisors</h3>
+            <table class="tab_green">
+                <tr>
+                    <th>Advisor Id</th>
+                    <th>Advisor Name</th>
+                </tr>
+                {% for key in data.advisors %}
+                <tr>
+                    <td> <b> {{key.id}} </b> </td>
+                    {%if key.name != ""%}
+                        <td> {{ key.name }}</td>
+                    {%else%}
+                        <td> --- </td>
+                    {%endif%}
+                </tr>
+            {% endfor %}
+            </table>
+
+
         </div>
     </div>
 
