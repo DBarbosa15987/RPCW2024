@@ -15,22 +15,27 @@ print("Parsed")
 # decoded_string = html.unescape(original_string)
 # print(decoded_string)
 
-debugDic={}
+debugDic={
+"departments":{},
+"publisher":[],
+"subjects":[],
+"journals":{},
+"fundEnt":{}
+}
 attribSet = set()
 
-contributorCreated = set()
+contributorCreated = {}
 departmentsCreated = set()
-publishersCreated = set()
-subjectsCreated = set()
-journalsCreated = set()
-fundEntCreated = set()
-eventCreated = set()
+publishersCreated = {}
+subjectsCreated = {}
+journalsCreated = {}
+fundEntCreated = {}
 
 counterContributors = 0
 counterPublisher = 0
 counterJournal = 0
 counterSubject = 0
-counterEvents = 0
+counterFundEnt = 0
 
 def getRToken(xmlString):
     root = ET.fromstring(xmlString)
@@ -47,47 +52,43 @@ def getXmlString(s,type):
     return r
 
 
-def debug_func(element, qualifier):
-    if element not in debugDic:
-        a = set()
-        a.add(qualifier)
-        debugDic[element] = a
-        print(debugDic)
-    else:
-        debugDic[element].add(qualifier)
-
-
 def parse_contributors(qualifier, authority, confidence, value ,recordUri):
     global counterContributors
-    new_person_uri = URIRef(f"{ns}contributor_{counterContributors}")
-    counterContributors += 1
+    key = value
+    if authority != None:
+        key = authority
 
-    if value not in contributorCreated:
-        g.add((new_person_uri,RDF.type,OWL.NamedIndividual))
-        g.add((new_person_uri,RDF.type,ns.Contributor))
-        g.add((new_person_uri,ns.contributor_name,Literal(value)))
+    person_uri = ""
+    if key in contributorCreated:
+        person_uri = contributorCreated[key]
+    else:
+        person_uri = URIRef(f"{ns}contributor_{counterContributors}")
+        g.add((person_uri,RDF.type,OWL.NamedIndividual))
+        g.add((person_uri,RDF.type,ns.Contributor))
+        g.add((person_uri,ns.contributor_name,Literal(value)))
         if confidence:
-            g.add((new_person_uri,ns.contributor_confidence,Literal(confidence)))
+            g.add((person_uri,ns.contributor_confidence,Literal(confidence)))
         if authority:
-            g.add((new_person_uri,ns.contributor_authority, Literal(authority)))
-        contributorCreated.add(value)
+            g.add((person_uri,ns.contributor_authority, Literal(authority)))
+        contributorCreated[key] = person_uri
+        counterContributors += 1
 
     if qualifier=="author": #add to ontologia na tag certa
-        g.add((new_person_uri, ns.authored , recordUri))
-        g.add((recordUri, ns.authored_by , new_person_uri))
+        g.add((person_uri, ns.authored , recordUri))
+        g.add((recordUri, ns.authored_by , person_uri))
         
     elif qualifier == "editor":
-        g.add((new_person_uri, ns.edited , recordUri))
-        g.add((recordUri, ns.edited_by , new_person_uri))
+        g.add((person_uri, ns.edited , recordUri))
+        g.add((recordUri, ns.edited_by , person_uri))
         
     elif qualifier == "advisor":
-        g.add((new_person_uri, ns.advised , recordUri))
-        g.add((recordUri, ns.advised_by , new_person_uri))
+        g.add((person_uri, ns.advised , recordUri))
+        g.add((recordUri, ns.advised_by , person_uri))
     else:
-        g.add((new_person_uri, ns.contributed , recordUri))
-        g.add((recordUri, ns.contributed_by , new_person_uri))
+        g.add((person_uri, ns.contributed , recordUri))
+        g.add((recordUri, ns.contributed_by , person_uri))
 
-    return new_person_uri
+    return person_uri
 
 def parse_date(qualifier, value ,recordUri):
     if qualifier == "issued":
@@ -135,23 +136,25 @@ def parse_language(qualifier, value ,recordUri):
 
 def parse_publisher(qualifier, value ,recordUri):
     global counterPublisher
-    new_publisher_uri = URIRef(f"{ns}publisher_{counterPublisher}")
-    counterPublisher += 1
 
-    if value not in publishersCreated:
-        g.add((new_publisher_uri,RDF.type,OWL.NamedIndividual))
-        g.add((new_publisher_uri,RDF.type,ns.PublisherEntity))
-        publishersCreated.add(value)
+    if value in publishersCreated:
+        publisher_uri = publishersCreated[value]
+    else:
+        publisher_uri = URIRef(f"{ns}publisher_{counterPublisher}")
+        g.add((publisher_uri,RDF.type,OWL.NamedIndividual))
+        g.add((publisher_uri,RDF.type,ns.PublisherEntity))
+        publishersCreated[value] = publisher_uri
+        counterPublisher += 1
 
     if qualifier == "uri":
-        g.add((new_publisher_uri, ns.publisher_uri, Literal(value)))
+        g.add((publisher_uri, ns.publisher_uri, Literal(value)))
     else:
-        g.add((new_publisher_uri, ns.publisher_name, Literal(value)))
+        g.add((publisher_uri, ns.publisher_name, Literal(value)))
 
-    g.add((new_publisher_uri, ns.published, recordUri))
-    g.add((recordUri, ns.published_by, new_publisher_uri))
+    g.add((publisher_uri, ns.published, recordUri))
+    g.add((recordUri, ns.published_by, publisher_uri))
 
-    return new_publisher_uri
+    return publisher_uri
 
 def parse_rights(qualifier, value ,recordUri):
     if qualifier == "uri":
@@ -161,29 +164,32 @@ def parse_rights(qualifier, value ,recordUri):
 
 def parse_subject(qualifier, value ,recordUri):
     global counterSubject
-    new_subject_uri = URIRef(f"{ns}subject_{counterSubject}")
 
-    if value not in subjectsCreated:
+    subject_uri = ""
+    if value in subjectsCreated:
+        subject_uri = subjectsCreated[value]
+    else:
+        subject_uri = URIRef(f"{ns}subject_{counterSubject}")
+        g.add((subject_uri,RDF.type,OWL.NamedIndividual))
+        g.add((subject_uri,RDF.type,ns.Subject))
+        subjectsCreated[value] = subject_uri
         counterSubject += 1
-        g.add((new_subject_uri,RDF.type,OWL.NamedIndividual))
-        g.add((new_subject_uri,RDF.type,ns.Subject))
-        subjectsCreated.add(value)
 
         if qualifier == "ods":
-            g.add((new_subject_uri, ns.subject_ods, Literal(value)))
+            g.add((subject_uri, ns.subject_ods, Literal(value)))
         elif qualifier == "fos":
-            g.add((new_subject_uri, ns.subject_fos, Literal(value)))
+            g.add((subject_uri, ns.subject_fos, Literal(value)))
         elif qualifier == "acm":
-            g.add((new_subject_uri, ns.subject_acm, Literal(value)))
+            g.add((subject_uri, ns.subject_acm, Literal(value)))
         elif qualifier == "wos":
-            g.add((new_subject_uri, ns.subject_wos, Literal(value)))
+            g.add((subject_uri, ns.subject_wos, Literal(value)))
         else:
-            g.add((new_subject_uri, ns.subject_, Literal(value)))
+            g.add((subject_uri, ns.subject_, Literal(value)))
 
-    g.add((new_subject_uri, ns.is_subject_in, recordUri))
-    g.add((recordUri, ns.has_subject, new_subject_uri))
+    g.add((subject_uri, ns.is_subject_in, recordUri))
+    g.add((recordUri, ns.has_subject, subject_uri))
 
-    return new_subject_uri
+    return subject_uri
 
 def parse_title(qualifier, value ,recordUri):
     if qualifier == "alternative":
@@ -194,22 +200,29 @@ def parse_title(qualifier, value ,recordUri):
 def parse_journal(authority, confidence, value ,recordUri):
     
     global counterJournal
-    new_journal_uri = URIRef(f"{ns}journal_{counterJournal}")
-    counterJournal += 1
 
-    if value not in journalsCreated:
-        g.add((new_journal_uri,RDF.type,OWL.NamedIndividual))
-        g.add((new_journal_uri,RDF.type,ns.Journal))
-        journalsCreated.add(value)
+    key = value
+    if authority != None:
+        key=authority
+
+    journal_uri = ""
+    if key in journalsCreated:
+        journal_uri = journalsCreated[key]
+    else:
+        journal_uri = URIRef(f"{ns}journal_{counterJournal}")
+        g.add((journal_uri,RDF.type,OWL.NamedIndividual))
+        g.add((journal_uri,RDF.type,ns.Journal))
+        journalsCreated[key] = journal_uri
+        counterJournal += 1
 
     if authority != None:
-        g.add((new_journal_uri,ns.journal_authority,Literal(authority)))
+        g.add((journal_uri,ns.journal_authority,Literal(authority)))
     if confidence != None:
-        g.add((new_journal_uri,ns.journal_confidence,Literal(confidence)))
+        g.add((journal_uri,ns.journal_confidence,Literal(confidence)))
         
-    g.add((new_journal_uri,ns.with_record,recordUri))
-    g.add((recordUri,ns.in_journal,new_journal_uri))
-    g.add((new_journal_uri,ns.journal_name,Literal(value)))
+    g.add((journal_uri,ns.with_record,recordUri))
+    g.add((recordUri,ns.in_journal,journal_uri))
+    g.add((journal_uri,ns.journal_name,Literal(value)))
 
 def parse_degree(qualifier, value ,recordUri):
     if qualifier == "grade":
@@ -226,8 +239,6 @@ def parse_event(qualifier, value ,recordUri):
         g.add((recordUri,ns.record_eventType,Literal(value)))
 
 def process_qualifiers(element, qualifier, authority, confidence, value ,recordUri):
-    #create instance of record
-    #debug_func(element, qualifier)
 
     if element == "contributor":
         parse_contributors(qualifier, authority, confidence, value ,recordUri)
@@ -369,13 +380,14 @@ def getInfoDIM(xmlString):
                 if element == "event":
                     eventData[qualifier] = field.text
 
-                value = process_qualifiers(element, qualifier, authority, confidence, field.text,recordUri)
+                process_qualifiers(element, qualifier, authority, confidence, field.text,recordUri)
 
 def getInfoOPEN_AIRE(xmlString):
 
     root = ET.fromstring(xmlString)
     listRecords = root.find(getXmlString("ListRecords","top"))
     records = listRecords.findall(getXmlString("record","top"))
+    global counterFundEnt
 
     for record in records:
         recordHeader = record.find(getXmlString("header","top"))
@@ -397,23 +409,24 @@ def getInfoOPEN_AIRE(xmlString):
                     continue
                 
                 fund_ent_name_processed = funder_name_elem.text.lower().replace(" ","_")
-                fund_ent_uri = URIRef(f"{ns}fund_ent_{fund_ent_name_processed}")
+                funder_name = funder_name_elem.text
 
-                g.add((fund_ent_uri,ns.funded,recordUri))
-                g.add((recordUri,ns.funded_by,fund_ent_uri))
-
-                if fund_ent_uri not in fundEntCreated:
+                if fund_ent_uri in fundEntCreated:
+                    fund_ent_uri = fundEntCreated[funder_name]
+                else:
+                    fund_ent_uri = URIRef(f"{ns}fund_ent_{counterFundEnt}")
                     g.add((fund_ent_uri,RDF.type,OWL.NamedIndividual))
                     g.add((fund_ent_uri,RDF.type,ns.FundingEntity))
-                    fundEntCreated.add(fund_ent_name_processed)
-
+                    fundEntCreated[funder_name] = fund_ent_uri
+                    counterFundEnt += 1
 
                 funder_identifier_elem = funding_ref.find('{http://namespace.openaire.eu/schema/oaire/}funderIdentifier')
                 funding_stream_elem = funding_ref.find('{http://namespace.openaire.eu/schema/oaire/}fundingStream')
                 award_number_elem = funding_ref.find('{http://namespace.openaire.eu/schema/oaire/}awardNumber')
 
-                if funder_name_elem is not None:
-                    g.add((fund_ent_uri, ns.funding_name, Literal(funder_name_elem.text)))
+                g.add((fund_ent_uri, ns.funding_name, Literal(funder_name)))
+                g.add((fund_ent_uri,ns.funded,recordUri))
+                g.add((recordUri,ns.funded_by,fund_ent_uri))
                 if funder_identifier_elem is not None:
                     g.add((fund_ent_uri,ns.funding_uri,Literal(funder_identifier_elem.text)))
                 if funding_stream_elem is not None:
@@ -454,3 +467,5 @@ for file in openaireFiles:
 
 print("Serializing")
 g.serialize(format="ttl",destination="ontology/repositorium.ttl")
+with open("debugDump.json",'w') as f:
+    json.dump(debugDic,f, indent=4,ensure_ascii=False)
