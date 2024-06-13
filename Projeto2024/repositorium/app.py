@@ -7,8 +7,6 @@ from datetime import datetime
 app = Flask(__name__)
 
 record_fields = {
-    "id":"record_id",
-    "timestamp":"record_timestamp",
     "abstract":"record_abstract",
     "alternativeTitle":"record_alternativeTitle",
     "articlenumber":"record_articlenumber",
@@ -38,8 +36,8 @@ record_fields = {
     "eventType":"record_eventType",
     "export":"record_export",
     "exportIdentifier":"record_exportIdentifier",
-    #"fundingAward":"record_fundingAward",
-    #"fundingStream":"record_fundingStream",
+    "fundingAward":"record_fundingAward",
+    "fundingStream":"record_fundingStream",
     "hasVersion":"record_hasVersion",
     "isBasedOn":"record_isBasedOn",
     "isPartOfSeries":"record_isPartOfSeries",
@@ -73,14 +71,14 @@ record_fields = {
 }
 
 record_relations = {
-    "publishers": ("published_by","published_"),
-    "authors": ("authored_by","authored"),
-    "advisors": ("advised_by","advised"),
-    "editors": ("edited_by","edited"),
-    "others": ("contributed_by","contributed"),
-    "departments": ("in_dep","dep_has_rec"),
-    "journals": ("in_journal","with_record"),
-    "fundingEnts": ("funded_by","funded")
+    "publisher_": ("published_by","published_"),
+    "author_": ("authored_by","authored"),
+    "advisor_": ("advised_by","advised"),
+    "editor_": ("edited_by","edited"),
+    "other_": ("contributed_by","contributed"),
+    "department_": ("in_dep","dep_has_rec"),
+    "journal_": ("in_journal","with_record"),
+    "funder_": ("funded_by","funded")
 }
 
 # data do sistema em formato ANSI ISO
@@ -176,7 +174,6 @@ SELECT * WHERE {{
                     curr['names'] = [(r['name'],id)]
         data.append(curr)
         count = countResult[0].get('count')
-        print(data)
         with open("debugDumpQuery.json",'w') as f:
             json.dump(data,f,indent=4,ensure_ascii=False)
         filter_switch()
@@ -188,44 +185,19 @@ SELECT * WHERE {{
 
 def getAllRelations():
 
-    query_authors = f"""
+    query_publishers = f"""
     PREFIX : {prefix}
-    SELECT DISTINCT ?authors ?name WHERE {{
-        ?r :authored_by ?authors.
-        ?authors :contributor_name ?name.
-    }}
-
-    """
-    query_editors = f"""
-    PREFIX : {prefix}
-    SELECT DISTINCT ?editors ?name WHERE {{
-        ?r :edited_by ?editors.
-        ?editors :contributor_name ?name.
+    SELECT DISTINCT ?publishers ?name WHERE {{
+        ?r :published_by ?publishers.
+        ?publishers :publisher_name ?name.
 
     }}
     """
-    query_advisors = f"""
+    query_contributors = f"""
     PREFIX : {prefix}
-    SELECT DISTINCT ?advisors ?name WHERE {{
-        ?r :advised_by ?advisors.
-        ?advisors :contributor_name ?name.
-
-    }}
-    """
-    query_publisher = f"""
-    PREFIX : {prefix}
-    SELECT DISTINCT ?publisher ?name WHERE {{
-        ?r :published_by ?publisher.
-        ?publisher :publisher_name ?name.
-
-    }}
-    """
-    query_others = f"""
-    PREFIX : {prefix}
-    SELECT DISTINCT ?others ?name WHERE {{
-        ?oters a :Other.
-        ?r :contrubuted_by ?others.
-        ?others :contributor_name ?name.
+    SELECT DISTINCT ?contributors ?name WHERE {{
+        ?r :contributed_by ?contributors.
+        ?contributors :contributor_name ?name.
 
     }}
     """
@@ -251,11 +223,8 @@ def getAllRelations():
     }}
     """
     data = {}
-    data["authors"] = getRelationsLst(query_authors,"authors")
-    data["editors"] = getRelationsLst(query_editors,"editors")
-    data["advisors"] = getRelationsLst(query_advisors,"advisors")
-    data["publisher"] = getRelationsLst(query_publisher,"publisher")
-    data["others"] = getRelationsLst(query_others,"others")
+    data["publishers"] = getRelationsLst(query_publishers,"publishers")
+    data["contributors"] = getRelationsLst(query_contributors,"contributors")
     data["journals"] = getRelationsLst(query_journals,"journals")
     data["departments"] = getRelationsLst(query_departments,"departments")
     data["funders"] = getRelationsLst(query_funders,"funders")
@@ -368,22 +337,32 @@ def getTriplosUpdate(id,form):
     for r in record_fields:
         if form.get(r)!=None:
             triplosInsert.append(f':{id} :{record_fields[r]} "{form[r]}".')
-            # triplosDelete.append(f":{id} :{record_fields[r]} ?{r}.")
             triplosDelete.append(f":{id} :{record_fields[r]} ?o.")
-    for r in record_relations:
-        if form.get(r)!=None:
-            triplosInsert.append(f':{id} :{record_relations[r][0]} "{form["r"].split("-")[0].strip()}".')    
-            triplosInsert.append(f'"{form["r"].split("-")[0].strip()}" :{record_relations[r][1]} :{id}.')
-            # values = form[r].split(';')
-            # for value in values:
-            #     triplosInsert.append(f':{id} :{record_relations[r][0]} "{value}".')
-            #     triplosInsert.append(f'"{value}" :{record_relations[r][1]} :{id}.')
-            
-            # triplosDelete.append(f":{id} :{record_relations[r][0]} ?{r}.")
-            # triplosDelete.append(f"?{r} :{record_relations[r][1]} :{id}.")
 
-            triplosDelete.append(f":{id} :{record_relations[r][0]} ?o.")
-            triplosDelete.append(f"?o :{record_relations[r][1]} :{id}.")
+    # for field in record_fields:
+    #     fields = [key for key in form if key.startswith(f)]
+    #     for f in fields:
+    #         triplosInsert.append(f':{id} :{record_fields[field]} "{form[f]}".')
+    #         triplosDelete.append(f":{id} :{record_fields[field]} ?o.")
+
+    for rel in record_relations:
+        rels = [key for key in form if key.startswith(rel)]
+        for r in rels:
+            triplosInsert.append(f':{id} :{record_relations[rel][0]} :{form[r].split("-")[0].strip()}.')    
+            triplosInsert.append(f':{form[r].split("-")[0].strip()} :{record_relations[rel][1]} :{id}.')
+
+            triplosDelete.append(f":{id} :{record_relations[rel][0]} ?o.")
+            triplosDelete.append(f"?o :{record_relations[rel][1]} :{id}.")
+
+    #for r in record_relations:
+        # if form.get(r)!=None:
+
+        #     if r == "authors"
+        #         triplosInsert.append(f':{id} :{record_relations[r][0]} "{form["r"].split("-")[0].strip()}".')    
+        #         triplosInsert.append(f'"{form["r"].split("-")[0].strip()}" :{record_relations[r][1]} :{id}.')
+        
+        #         triplosDelete.append(f":{id} :{record_relations[r][0]} ?o.")
+        #         triplosDelete.append(f"?o :{record_relations[r][1]} :{id}.")
         
     return triplosInsert,triplosDelete
 
@@ -428,8 +407,8 @@ def getRecordById(id):
     optional {{:{id} :record_eventType ?eventType.}}
     optional {{:{id} :record_export ?export.}}
     optional {{:{id} :record_exportIdentifier ?exportIdentifier.}}
-    #optional {{:{id} :record_fundingAward ?fundingAward.}}
-    #optional {{:{id} :record_fundingStream ?fundingStream.}}
+    optional {{:{id} :record_fundingAward ?fundingAward.}}
+    optional {{:{id} :record_fundingStream ?fundingStream.}}
     optional {{:{id} :record_hasVersion ?hasVersion.}}
     optional {{:{id} :record_isBasedOn ?isBasedOn.}}
     optional {{:{id} :record_isPartOfSeries ?isPartOfSeries.}}
@@ -481,7 +460,7 @@ def getRecordRelations(id):
     PREFIX : {prefix}
     select * where {{ 
     ?authors a :Author.
-    optional{{?authors :contributor_name ?name}}.
+    ?authors :contributor_name ?name.
     ?authors :authored :{id}.
     }}
 """
@@ -489,7 +468,7 @@ def getRecordRelations(id):
     PREFIX : {prefix}
     select * where {{ 
     ?editors a :Editor.
-    optional{{?editors :contributor_name ?name}}.
+    ?editors :contributor_name ?name.
     ?editors :edited :{id}.
     }}
 """
@@ -497,7 +476,7 @@ def getRecordRelations(id):
     PREFIX : {prefix}
     select * where {{ 
     ?advisors a :Advisor.
-    optional{{?advisors :contributor_name ?name}}.
+    ?advisors :contributor_name ?name.
     ?advisors :advised :{id}.
     }}
 """
@@ -505,7 +484,7 @@ def getRecordRelations(id):
     PREFIX : {prefix}
     select * where {{ 
     ?publisher a :PublisherEntity.
-    optional{{?publisher :publisher_name ?name}}.
+    ?publisher :publisher_name ?name.
     ?publisher :published :{id}.
     }}
 """
@@ -513,7 +492,7 @@ def getRecordRelations(id):
     PREFIX : {prefix}
     select * where {{ 
     ?others a :Other.
-    optional{{?others :contributor_name ?name}}.
+    ?others :contributor_name ?name.
     ?others :contributed :{id}.
     }}
 """
@@ -521,7 +500,7 @@ def getRecordRelations(id):
     PREFIX : {prefix}
     select * where {{ 
     ?journals a :Journal.
-    optional{{?journals :journal_name ?name}}
+    ?journals :journal_name ?name.
     ?journals :with_record :{id}.
     }}
 """
@@ -529,7 +508,7 @@ def getRecordRelations(id):
     PREFIX : {prefix}
     select * where {{ 
     ?departments a :Department.
-    optional{{?departments :department_name ?name}}
+    ?departments :department_name ?name.
     ?departments :dep_has_rec :{id}.
     }}
 """
@@ -537,7 +516,7 @@ def getRecordRelations(id):
     PREFIX : {prefix}
     select * where {{ 
     ?funders a :FundingEntity.
-    optional{{?funders :funding_name ?name}}
+    ?funders :funding_name ?name.
     ?funders :funded :{id}.
     }}
 """
@@ -588,8 +567,10 @@ def deleteRecord(id):
     sparql_post_query(query)
     return redirect(url_for('actionsRecords'), code=303)
 
+
 def createRecordGET():
     return render_template("createRecord.html")
+
 
 def getTriplosMultiplos(type,record_uri,type_uri):
     # "authors","editors","advisors","journals","departments","publishers","fundingEnts"]
@@ -636,7 +617,8 @@ def getTriplosMultiplos(type,record_uri,type_uri):
 :{type_uri} :funded {record_uri}.
     """
     return query        
-    
+
+
 def createRecordPOST(form):
     title = form.get("title")
     alTitle = form.get("alTitle")
@@ -743,14 +725,15 @@ def updateRecordPOST(id,form):
     print(query)
     return redirect(url_for('actionsRecords'), code=303)
 
+
 def listContributorsGET():
-    query = """
-    PREFIX : <http://rpcw.di.uminho.pt/2024/repositorium/>
-    SELECT * WHERE {
+    query = f"""
+    PREFIX : {prefix}
+    SELECT * WHERE {{
         ?dep a :Contributor.
         ?dep :contributor_name ?name
-    }
-    LIMIT 50
+    }}
+    LIMIT {limit}
     """
 
     jsonReponse = sparql_get_query(query)
@@ -763,13 +746,13 @@ def listContributorsGET():
 
 
 def listJournalsGET():
-    query = """
-    PREFIX : <http://rpcw.di.uminho.pt/2024/repositorium/>
-    SELECT * WHERE {
+    query = f"""
+    PREFIX : {prefix}
+    SELECT * WHERE {{
         ?dep a :Journal.
         ?dep :journal_name ?name
-    }
-    LIMIT 50
+    }}
+    LIMIT {limit}
     """
 
     jsonReponse = sparql_get_query(query)
@@ -780,14 +763,15 @@ def listJournalsGET():
     else:
         return render_template('listJournals.html', data=[])
 
+
 def listDepartmentsGET():
-    query = """
-    PREFIX : <http://rpcw.di.uminho.pt/2024/repositorium/>
-    SELECT * WHERE {
+    query = f"""
+    PREFIX : {prefix}
+    SELECT * WHERE {{
         ?dep a :Department.
         ?dep :department_name ?name
-    }
-    LIMIT 50
+    }}
+    LIMIT {limit}
     """
 
     jsonReponse = sparql_get_query(query)
@@ -800,13 +784,13 @@ def listDepartmentsGET():
 
 
 def listPublishersGET():
-    query = """
-    PREFIX : <http://rpcw.di.uminho.pt/2024/repositorium/>
-    SELECT * WHERE {
+    query = f"""
+    PREFIX : {prefix}
+    SELECT * WHERE {{
         ?dep a :PublisherEntity.
         ?dep :publisher_name ?name.  
-    }
-    LIMIT 50
+    }}
+    LIMIT {limit}
     """
 
     jsonReponse = sparql_get_query(query)
@@ -908,8 +892,6 @@ def updateRecord(id):
    elif request.method == 'POST':
        return updateRecordPOST(id,request.form)
     
-    
-
 @app.route("/recordEdit/<id>",methods={'POST'})
 def recordEdit(id):
     global current_route, page
@@ -917,19 +899,9 @@ def recordEdit(id):
     if request.method == 'POST':
         return redirect(url_for(f'updateRecord/{id}'), code=303)
 
-
 @app.route('/')
 def index():
     return render_template('index.html', data = {"data": data_iso_formatada})
-
-@app.route("/temp", methods=["POST", "GET"]) 
-def home(): 
-    if request.method == "GET": 
-        languages = [("C++",1), ("Python",2), ("PHP",3), ("Java",4), ("C",5), ("Ruby",6), 
-                     ("R",7), ("C#",8), ("Dart",9), ("Fortran",10), ("Pascal",11), ("Javascript",12)] 
-          
-        return render_template("temp.html", languages=languages) 
-  
 
 
 if __name__ == '__main__':
