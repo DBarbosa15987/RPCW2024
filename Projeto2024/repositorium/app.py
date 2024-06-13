@@ -44,7 +44,7 @@ record_fields = {
     "isVersionOf":"record_isVersionOf",
     "isbn":"record_isbn",
     "issn":"record_issn",
-    "journal":"record_journal",
+    "journal_":"record_journal",
     "language":"record_language",
     "number":"record_number",
     "ogUri":"record_ogUri",
@@ -287,6 +287,7 @@ def listRecordsPOST(form, page_to_render = 'listRecords.html'):
                 ?r a :Record.
                 ?r :record_timestamp ?timestamp.
                 {line_title}
+                {line_id}
                 {line_contributor}
             }}{line_order_by_stamp} LIMIT {limit} OFFSET {(page-1)*limit}
         }}
@@ -353,16 +354,6 @@ def getTriplosUpdate(id,form):
 
             triplosDelete.append(f":{id} :{record_relations[rel][0]} ?o.")
             triplosDelete.append(f"?o :{record_relations[rel][1]} :{id}.")
-
-    #for r in record_relations:
-        # if form.get(r)!=None:
-
-        #     if r == "authors"
-        #         triplosInsert.append(f':{id} :{record_relations[r][0]} "{form["r"].split("-")[0].strip()}".')    
-        #         triplosInsert.append(f'"{form["r"].split("-")[0].strip()}" :{record_relations[r][1]} :{id}.')
-        
-        #         triplosDelete.append(f":{id} :{record_relations[r][0]} ?o.")
-        #         triplosDelete.append(f"?o :{record_relations[r][1]} :{id}.")
         
     return triplosInsert,triplosDelete
 
@@ -533,43 +524,16 @@ def getRecordRelations(id):
 
     return data
 
-@app.route('/record/<id>', methods=['GET'])
-def records(id):
-
-    id_to_query = f"record_{id}"
-
-    result = getRecordById(id_to_query)
-
-    if result:
-        recordFields = [(k,r['value']) for k,r in result[0].items()]
-        data = getRecordRelations(id_to_query)
-        data['recordFields'] = recordFields
-        
-        return render_template('record.html', data=data)
-    else:
-        return render_template('empty.html', data=[])
-
-@app.route('/recordDelete/<id>', methods=['DELETE'])
-def deleteRecord(id):
-    id_to_delete = f"record_{id}"
-    print(f"DELETED ID:{id_to_delete}")
-    query = f"""
-    PREFIX : {prefix}
-    DELETE {{
-        :{id_to_delete} ?p ?o .
-        ?s ?p2 :{id_to_delete}.
-    }}
-    WHERE {{
-        ?s ?p2 :{id_to_delete}.
-        :{id_to_delete} ?p ?o .
-    }}
-"""
-    sparql_post_query(query)
-    return redirect(url_for('actionsRecords'), code=303)
-
 
 def createRecordGET():
-    return render_template("createRecord.html")
+
+    recordFields = [r for r in record_fields if r.lower()!= "oguri" and r.lower()!= "other"]
+    data = {}
+    #data=[r[0].replace("_",'s') for r in record_relations]
+    data['recordFields'] = recordFields
+    allData = getAllRelations()
+
+    return render_template("createRecord.html",allData=allData,data=data)
 
 
 def getTriplosMultiplos(type,record_uri,type_uri):
@@ -620,10 +584,6 @@ def getTriplosMultiplos(type,record_uri,type_uri):
 
 
 def createRecordPOST(form):
-    title = form.get("title")
-    alTitle = form.get("alTitle")
-    issn = form.get("issn")
-    doi = form.get("doi")
 
     id_query = f"""
     PREFIX : {prefix}
@@ -638,29 +598,18 @@ def createRecordPOST(form):
     if result:
         i = max([int(r['id']['value'].split("/")[-1]) for r in result]) + 1
     
-    uri = f":record_0000_{i}"
+    uri = f"record_0000_{i}"
     id = f"0000/{i}"
-    #line_alTitle,line_issn,line_doi = "","",""
     
-    relations = ["authors","editors","advisors","journals","departments","publishers","fundingEnts"]
-    triplos,_ = getTriplosUpdate(id,form)
-    for rel in relations:
-        relLst = form.get(rel) #contributor_0; contributor_1; contributor_2
-        if relLst:
-            l = relLst.split(";")
-            for r in l:
-                triplos.append(getTriplosMultiplos(rel,uri,r))
+    # relations = ["authors","editors","advisors","journals","departments","publishers","fundingEnts"]
+    triplos,_ = getTriplosUpdate(uri,form)
+    # for rel in relations:
+    #     relLst = form.get(rel) #contributor_0; contributor_1; contributor_2
+    #     if relLst:
+    #         l = relLst.split(";")
+    #         for r in l:
+    #             triplos.append(getTriplosMultiplos(rel,uri,r))
 
-
-    # if alTitle and alTitle != "":
-    #     line_alTitle = f'{uri} :record_alternativeTitle "{alTitle}".'
-    #     triplos.append(line_alTitle)
-    # if issn and issn != "":
-    #     line_issn = f'{uri} :record_issn "{issn}".'
-    #     triplos.append(line_issn)
-    # if doi and doi != "":
-    #     line_doi = f'{uri} :record_doi "{doi}".'
-    #     triplos.append(line_doi)
 
     data_hora_atual = datetime.now()
     data_iso_formatada = data_hora_atual.strftime('%Y-%m-%dT%H:%M:%S+00:00')
@@ -671,10 +620,9 @@ PREFIX : {prefix}
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 INSERT DATA {{
 
-    {uri} a :Record, owl:NamedIndividual.
-    {uri} :record_id "{id}".
-    {uri} :record_title "{title}".
-    {uri} :record_timestamp "{data_iso_formatada}"^^xsd:dateTime.
+    :{uri} a :Record, owl:NamedIndividual.
+    :{uri} :record_id "{id}".
+    :{uri} :record_timestamp "{data_iso_formatada}"^^xsd:dateTime.
     {nl.join(triplos)}
     
     }}
@@ -800,6 +748,40 @@ def listPublishersGET():
         return render_template('listPublishers.html', listPublishers = data)
     else:
         return render_template('listPublishers.html', data=[])
+
+@app.route('/record/<id>', methods=['GET'])
+def records(id):
+
+    id_to_query = f"record_{id}"
+
+    result = getRecordById(id_to_query)
+
+    if result:
+        recordFields = [(k,r['value']) for k,r in result[0].items()]
+        data = getRecordRelations(id_to_query)
+        data['recordFields'] = recordFields
+        
+        return render_template('record.html', data=data)
+    else:
+        return render_template('empty.html', data=[])
+
+@app.route('/recordDelete/<id>', methods=['DELETE'])
+def deleteRecord(id):
+    id_to_delete = f"record_{id}"
+    print(f"DELETED ID:{id_to_delete}")
+    query = f"""
+    PREFIX : {prefix}
+    DELETE {{
+        :{id_to_delete} ?p ?o .
+        ?s ?p2 :{id_to_delete}.
+    }}
+    WHERE {{
+        ?s ?p2 :{id_to_delete}.
+        :{id_to_delete} ?p ?o .
+    }}
+"""
+    sparql_post_query(query)
+    return redirect(url_for('actionsRecords'), code=303)
 
 @app.route('/nextPage', methods=['POST'])
 def nextPage():

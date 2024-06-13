@@ -28,6 +28,7 @@
                 
                 {% for field in data.recordFields %}
                 <div>
+                    
                     <h3 style="margin-bottom: 0%;">{{field[0].capitalize()}}</h3>
                     <div id="{{ field[0] }}-container">
                     {% if field[0].capitalize() != "Id" and field[0].capitalize() != "Timestamp" and field[0].capitalize() != "Oguri" %}

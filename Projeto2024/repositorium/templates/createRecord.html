@@ -9,6 +9,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/navBar.css') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/creater.css') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='javascript/creater.js') }}"/>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.js"></script>
+    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/ui-lightness/jquery-ui.css" rel="stylesheet" type="text/css" />
+
 </head>
 <body>
     <div class="sidebar">
@@ -20,60 +25,64 @@
     
     <form method="Post" autocomplete="off" action="/createRecord">
         <div>
-            <div>
-                <label for="title">Title:</label>
-                <input type="text" id="title" name="title" required>
-            </div>
+                {% for field in data.recordFields %}
+                <div>
+                    <h3 style="margin-bottom: 0%;">{{field.capitalize()}}</h3>
+                    <div id="{{ field }}-container">
+                    {% if field.capitalize() != "Id" and field.capitalize() != "Timestamp" and field.capitalize() != "Oguri" %}
+                        <input type="text" id="{{ field }}" value="" name="{{ field }}">
+                    {% endif %}
 
-            <div>
-                <label for="alTitle">Alternative Title:</label>
-                <input type="text" id="alTitle" name="alTitle">
-            </div>
+                    {% if field.capitalize() == "Abstract" or field.capitalize() == "Issn" or field.capitalize() == "Isbn" or field.capitalize() == "Alternativetitle" or field.capitalize() == "Comments" or field.capitalize() == "Conferencepublication" or field.capitalize() == "Eissn" or field.capitalize() == "Eisbn" or field.capitalize() == "Fundingstream" or field.capitalize() == "Fundingaward"%}
+                        <button type="button" id="add-field_{{field}}">+</button>
+                    {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
 
-            <div>
-                <label for="issn">ISSN:</label>
-                <input type="text" id="issn" name="issn">
-            </div>
+                <h3 style="margin-bottom: 0%;">Authors</h3>
+                <button type="button" id="add-author">+</button>
+                <div id="author-container">
+                    <div class="author-container" id="author_div_1">
+                        <button type="button" class="remove-author" name="remove_author_1">-</button>
+                        <input type="text" id="author_1" name="author_1" placeholder="">
+                        </div>
+                </div>
+                <!---->
 
-            <div>
-                <label for="doi">DOI:</label>
-                <input type="text" id="doi" name="doi">
-            </div>
+                <h3 style="margin-bottom: 0%;">Editors</h3>
+                <div id="editor-container">
+                </div>
+                <button type="button" id="add-editor"> + </button>
 
-            <div>
-                <label for="author">Author:</label>
-                <input type="text" id="author" name="authors" required>
-            </div>
 
-            <div>
-                <label for="editor">Editor:</label>
-                <input type="text" id="editor" name="editors">
-            </div>
+                <!---->
 
-            <div>
-                <label for="advisor">Advisor:</label>
-                <input type="text" id="advisor" name="advisors">
-            </div>
+                <h3 style="margin-bottom: 0%;">Advisors</h3>
+                <div id="advisor-container">
+                </div>
+                <button type="button" id="add-advisor"> + </button>
 
-            <div>
-                <label for="department">Department:</label>
-                <input type="text" id="department" name="departments">
-            </div>
+                <!---->
+                <h3 style="margin-bottom: 0%;">Departments</h3>
+                <div id="department-container">
+                </div>
+                <button type="button" id="add-department"> + </button>
 
-            <div>
-                <label for="journal">Journal:</label>
-                <input type="text" id="journal" name="journals">
-            </div>
+                <h3 style="margin-bottom: 0%;">Journals </h3>
+                <div id="journal-container">
+                </div>
+                <button type="button" id="add-journal"> + </button>
 
-            <div>
-                <label for="publisher">Publisher:</label>
-                <input type="text" id="fundingEnt" name="publishers">
-            </div>
+                <h3 style="margin-bottom: 0%;">Publishers</h3>
+                <div id="publisher-container">
+                </div>
+                <button type="button" id="add-publisher"> + </button>
 
-            <div>
-                <label for="fundingEnt">fundingEnt:</label>
-                <input type="text" id="fundingEnt" name="fundingEnts">
-            </div>
+                <h3 style="margin-bottom: 0%;">Funding Entity</h3>
+                <div id="funder-container">
+                </div>
+                <button type="button" id="add-funder"> + </button>
 
         </div>
         <input type="submit" value="Create Record">
@@ -83,10 +92,364 @@
     </div>
 
     <script>
-        autocomplete(document.getElementById("names"), names);
-        autocomplete(document.getElementById("journals"), journals);
-        autocomplete(document.getElementById("departments"), departments);
-        autocomplete(document.getElementById("publishers"), departments);
-        autocomplete(document.getElementById("fundingEnts"), departments);
+        //autocomplete(document.getElementById("names"), names);
+        //autocomplete(document.getElementById("journals"), journals);
+        //autocomplete(document.getElementById("departments"), departments);
+        //autocomplete(document.getElementById("publishers"), departments);
+        //autocomplete(document.getElementById("fundingEnts"), departments);
+
+
+        let author_counter = 1;
+        let editor_counter = 0;
+        let advisor_counter = 0;
+        let department_counter = 0;
+        let journal_counter = 0;
+        let publisher_counter = 0;
+        let funder_counter = 0;
+        let field_counters = {};
+
+        function applyAutocomplete(elementId, availableTags) {
+            $("#" + elementId).autocomplete({
+                source: availableTags
+            });
+        }
+
+        // Initialize autocomplete for the first author input
+        var availableTags = [
+            {% for value in allData.contributors %} 
+            "{{value.id}} - {{value.name}}",
+            {% endfor %} 
+        ];
+
+        var availableTagsDepartments = [
+            {% for value in allData.departments %} 
+            "{{value.id}} - {{value.name}}",
+            {% endfor %} 
+        ];
+
+        var availableTagsJournals = [
+            {% for value in allData.journals %} 
+            "{{value.id}} - {{value.name}}",
+            {% endfor %} 
+        ];
+
+        var availableTagsPublishers = [
+            {% for value in allData.publishers %} 
+            "{{value.id}} - {{value.name}}",
+            {% endfor %} 
+        ];
+
+        var availableTagsFunders = [
+            {% for value in allData.funders %} 
+            "{{value.id}} - {{value.name}}",
+            {% endfor %} 
+        ];
+
+        
+
+// Function to add a new author input
+document.getElementById('add-author').addEventListener('click', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    
+    author_counter++;
+    
+    // Create a new div for the new author input
+    let newDiv = document.createElement('div');
+    newDiv.className = 'author-container';
+    newDiv.id = 'author_div_' + author_counter;
+
+    // Create a new input for author
+    let newInput = document.createElement('input');
+    newInput.type = 'text';
+    newInput.id = 'author_' + author_counter;
+    newInput.name = 'author_' + author_counter;
+    newInput.placeholder = '';
+
+    // Create a new remove button for author
+    let removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'remove-author';
+    removeButton.name = 'remove_author_' + author_counter;
+    removeButton.textContent = 'Remove';
+
+    // Append the input and remove button to the new div
+    newDiv.appendChild(newInput);
+    newDiv.appendChild(removeButton);
+
+    // Append the new div to the container
+    document.getElementById('author-container').appendChild(newDiv);
+
+    // Apply autocomplete to the new input
+    applyAutocomplete(newInput.id, availableTags);
+});
+
+// Function to remove the dynamically added author input
+$(document).on('click', '.remove-author', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    
+    // Get the parent div of the remove button and remove it
+    $(this).parent('.author-container').remove();
+});
+
+applyAutocomplete('author_1', availableTags);
+
+// Function to add a new editor input
+document.getElementById('add-editor').addEventListener('click', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    
+    editor_counter++;
+    
+    // Create a new div for the new editor input
+    let newDiv = document.createElement('div');
+    newDiv.className = 'editor-container';
+    newDiv.id = 'editor_div_' + editor_counter;
+
+    // Create a new input for editor
+    let newInput = document.createElement('input');
+    newInput.type = 'text';
+    newInput.id = 'editor_' + editor_counter;
+    newInput.name = 'editor_' + editor_counter;
+    newInput.placeholder = '';
+
+    // Create a new remove button for editor
+    let removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'remove-editor';
+    removeButton.name = 'remove_editor_' + editor_counter;
+    removeButton.textContent = '-';
+
+    // Append the input and remove button to the new div
+    newDiv.appendChild(newInput);
+    newDiv.appendChild(removeButton);
+
+    // Append the new div to the container
+    document.getElementById('editor-container').appendChild(newDiv);
+
+    // Apply autocomplete to the new input
+    applyAutocomplete(newInput.id, availableTags);
+});
+
+// Function to remove the dynamically added editor input
+$(document).on('click', '.remove-editor', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    
+    // Get the parent div of the remove button and remove it
+    $(this).parent('.editor-container').remove();
+});
+
+// Function to add a new advisor input
+document.getElementById('add-advisor').addEventListener('click', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    
+    advisor_counter++;
+    
+    // Create a new div for the new advisor input
+    let newDiv = document.createElement('div');
+    newDiv.className = 'advisor-container';
+    newDiv.id = 'advisor_div_' + advisor_counter;
+
+    // Create a new input for advisor
+    let newInput = document.createElement('input');
+    newInput.type = 'text';
+    newInput.id = 'advisor_' + advisor_counter;
+    newInput.name = 'advisor_' + advisor_counter;
+    newInput.placeholder = '';
+
+    // Create a new remove button for advisor
+    let removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'remove-advisor';
+    removeButton.name = 'remove_advisor_' + advisor_counter;
+    removeButton.textContent = '-';
+
+    // Append the input and remove button to the new div
+    newDiv.appendChild(newInput);
+    newDiv.appendChild(removeButton);
+
+    // Append the new div to the container
+    document.getElementById('advisor-container').appendChild(newDiv);
+
+    // Apply autocomplete to the new input
+    applyAutocomplete(newInput.id, availableTags);
+});
+
+// Function to remove the dynamically added advisor input
+$(document).on('click', '.remove-advisor', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    
+    // Get the parent div of the remove button and remove it
+    $(this).parent('.advisor-container').remove();
+});
+
+applyAutocomplete('advisor_1', availableTags);
+
+document.getElementById('add-department').addEventListener('click', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    
+    department_counter++;
+    
+    // Create a new div for the new department input
+    let newDiv = document.createElement('div');
+    newDiv.className = 'department-container';
+    newDiv.id = 'department_div_' + department_counter;
+
+    // Create a new input for department
+    let newInput = document.createElement('input');
+    newInput.type = 'text';
+    newInput.id = 'department_' + department_counter;
+    newInput.name = 'department_' + department_counter;
+    newInput.placeholder = '';
+
+    // Create a new remove button for department
+    let removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'remove-department';
+    removeButton.name = 'remove_department_' + department_counter;
+    removeButton.textContent = '-';
+
+    // Append the input and remove button to the new div
+    newDiv.appendChild(newInput);
+    newDiv.appendChild(removeButton);
+
+    // Append the new div to the container
+    document.getElementById('department-container').appendChild(newDiv);
+
+    // Apply autocomplete to the new input
+    applyAutocomplete(newInput.id, availableTagsDepartments);
+});
+
+// Function to remove the dynamically added department input
+$(document).on('click', '.remove-department', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    
+    // Get the parent div of the remove button and remove it
+    $(this).parent('.department-container').remove();
+});
+
+document.getElementById('add-journal').addEventListener('click', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    
+    journal_counter++;
+    
+    // Create a new div for the new journal input
+    let newDiv = document.createElement('div');
+    newDiv.className = 'journal-container';
+    newDiv.id = 'journal_div_' + journal_counter;
+
+    // Create a new input for journal
+    let newInput = document.createElement('input');
+    newInput.type = 'text';
+    newInput.id = 'journal_' + journal_counter;
+    newInput.name = 'journal_' + journal_counter;
+
+    // Create a new remove button for journal
+    let removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'remove-journal';
+    removeButton.name = 'remove_journal_' + journal_counter;
+    removeButton.textContent = '-';
+
+    // Append the input and remove button to the new div
+    newDiv.appendChild(newInput);
+    newDiv.appendChild(removeButton);
+
+    // Append the new div to the container
+    document.getElementById('journal-container').appendChild(newDiv);
+
+    // Apply autocomplete to the new input
+    applyAutocomplete(newInput.id, availableTagsJournals);
+});
+
+// Function to remove the dynamically added journal input
+$(document).on('click', '.remove-journal', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    
+    // Get the parent div of the remove button and remove it
+    $(this).parent('.journal-container').remove();
+});
+
+document.getElementById('add-publisher').addEventListener('click', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    
+    publisher_counter++;
+    
+    // Create a new div for the new publisher input
+    let newDiv = document.createElement('div');
+    newDiv.className = 'publisher-container';
+    newDiv.id = 'publisher_div_' + publisher_counter;
+
+    // Create a new input for publisher
+    let newInput = document.createElement('input');
+    newInput.type = 'text';
+    newInput.id = 'publisher_' + publisher_counter;
+    newInput.name = 'publisher_' + publisher_counter;
+
+    // Create a new remove button for publisher
+    let removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'remove-publisher';
+    removeButton.name = 'remove_publisher_' + publisher_counter;
+    removeButton.textContent = '-';
+
+    // Append the input and remove button to the new div
+    newDiv.appendChild(newInput);
+    newDiv.appendChild(removeButton);
+
+    // Append the new div to the container
+    document.getElementById('publisher-container').appendChild(newDiv);
+
+    // Apply autocomplete to the new input
+    applyAutocomplete(newInput.id, availableTagsPublishers);
+});
+
+// Function to remove the dynamically added publisher input
+$(document).on('click', '.remove-publisher', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    
+    // Get the parent div of the remove button and remove it
+    $(this).parent('.publisher-container').remove();
+});
+
+document.getElementById('add-funder').addEventListener('click', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    
+    funder_counter++;
+    
+    // Create a new div for the new funder input
+    let newDiv = document.createElement('div');
+    newDiv.className = 'funder-container';
+    newDiv.id = 'funder_div_' + funder_counter;
+
+    // Create a new input for funder
+    let newInput = document.createElement('input');
+    newInput.type = 'text';
+    newInput.id = 'funder_' + funder_counter;
+    newInput.name = 'funder_' + funder_counter;
+
+    // Create a new remove button for funder
+    let removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'remove-funder';
+    removeButton.name = 'remove_funder_' + funder_counter;
+    removeButton.textContent = '-';
+
+    // Append the input and remove button to the new div
+    newDiv.appendChild(newInput);
+    newDiv.appendChild(removeButton);
+
+    // Append the new div to the container
+    document.getElementById('funder-container').appendChild(newDiv);
+
+    // Apply autocomplete to the new input
+    applyAutocomplete(newInput.id, availableTagsFunders);
+});
+
+// Function to remove the dynamically added funder input
+$(document).on('click', '.remove-funder', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    
+    // Get the parent div of the remove button and remove it
+    $(this).parent('.funder-container').remove();
+});
     </script>
 </body>
