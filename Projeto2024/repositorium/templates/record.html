@@ -28,9 +28,32 @@
             {% for key, value  in data.recordFields %}
                 <tr>
                     <td> <b>{{ key }}</b> </td>
+                    {%if key == "file"%}
+                    <td><a href="{{value}}">{{ value }}<a></td>
+                    {%else%}
                     <td> {{ value }}</td>
+                    {%endif%}
                 </tr>
             {% endfor %}
+            </table>
+
+            <br><br><br><hr>
+            <h3>Keywords</h3>
+            <table class="tab_green">
+                <tr>
+                    <th>Keyword Id</th>
+                    <th>Keyword Name</th>
+                </tr>
+                {% for key in data.subjects %}
+                <tr>
+                    <td> <b> {{key.id}} </b> </td>
+                    {%if key.name != ""%}
+                        <td> {{ key.name }}</td>
+                    {%else%}
+                        <td> --- </td>
+                    {%endif%}
+                </tr>
+                {% endfor %}
             </table>
 
             <br><br><br><hr>

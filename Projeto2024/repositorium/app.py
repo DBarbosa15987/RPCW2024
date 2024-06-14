@@ -6,84 +6,76 @@ from datetime import datetime
 
 app = Flask(__name__)
 
+
 record_fields = {
-    "abstract":"record_abstract",
-    "alternativeTitle":"record_alternativeTitle",
-    "articlenumber":"record_articlenumber",
-    "bookTitle":"record_bookTitle",
-    "citation":"record_citation",
-    "citationConferenceDate":"record_citationConferenceDate",
-    "citationConferencePlace":"record_citationConferencePlace",
-    "citationEdition":"record_citationEdition",
-    "citationEndPage":"record_citationEndPage",
-    "citationIssue":"record_citationIssue",
-    "citationStartPage":"record_citationStartPage",
-    "citationTitle":"record_citationTitle",
-    "citationVolume":"record_citationVolume",
-    "comments":"record_comments",
-    "conferencePublication":"record_conferencePublication",
-    "dateEmbargo":"record_dateEmbargo",
-    "dateIssued":"record_dateIssued",
-    "degre_grade":"record_degre_grade",
-    "degree_grantor":"record_degree_grantor",
-    "description":"record_description",
-    "doi":"record_doi",
-    "eisbn":"record_eisbn",
-    "eissn":"record_eissn",
-    "embargoFct":"record_embargoFct",
-    "eventLocation":"record_eventLocation",
-    "eventTitle":"record_eventTitle",
-    "eventType":"record_eventType",
-    "export":"record_export",
-    "exportIdentifier":"record_exportIdentifier",
-    "fundingAward":"record_fundingAward",
-    "fundingStream":"record_fundingStream",
-    "hasVersion":"record_hasVersion",
-    "isBasedOn":"record_isBasedOn",
-    "isPartOfSeries":"record_isPartOfSeries",
-    "isVersionOf":"record_isVersionOf",
-    "isbn":"record_isbn",
-    "issn":"record_issn",
-    "journal_":"record_journal",
-    "language":"record_language",
-    "number":"record_number",
-    "ogUri":"record_ogUri",
-    "other":"record_other",
-    "pagination":"record_pagination",
-    "peerReviewed":"record_peerReviewed",
-    "pmc":"record_pmc",
-    "pmid":"record_pmid",
-    "publicationStatus":"record_publicationStatus",
-    "publicationversion":"record_publicationversion",
-    "publisherVersion":"record_publisherVersion",
-    "relation":"record_relation",
-    "relationUri":"record_relationUri",
-    "rights":"record_rights",
-    "rightsUri":"record_rightsUri",
-    "slug":"record_slug",
-    "sponsorship":"record_sponsorship",
-    "tid":"record_tid",
-    "title":"record_title",
-    "type":"record_type",
-    "uoei":"record_uoei",
-    "version":"record_version",
-    "volume":"record_volume",
+    "abstract":("record_abstract","abstract_"),
+    "alternativeTitle":("record_alternativeTitle","alternativeTitle_"),
+    "articlenumber":("record_articlenumber","articlenumber"),
+    "bookTitle":("record_bookTitle","bookTitle"),
+    "citation":("record_citation","citation"),
+    "citationConferenceDate":("record_citationConferenceDate","citationConferenceDate"),
+    "citationConferencePlace":("record_citationConferencePlace","citationConferencePlace"),
+    "citationEdition":("record_citationEdition","citationEdition"),
+    "citationEndPage":("record_citationEndPage","citationEndPage"),
+    "citationIssue":("record_citationIssue","citationIssue"),
+    "citationStartPage":("record_citationStartPage","citationStartPage"),
+    "citationTitle":("record_citationTitle","citationTitle"),
+    "citationVolume":("record_citationVolume","citationVolume"),
+    "comments":("record_comments","comments_"),
+    "conferencePublication":("record_conferencePublication","conferencePublication_"),
+    "dateEmbargo":("record_dateEmbargo","dateEmbargo"),
+    "dateIssued":("record_dateIssued","dateIssued"),
+    "degre_grade":("record_degre_grade","degre_grade"),
+    "degree_grantor":("record_degree_grantor","degree_grantor"),
+    "description":("record_description","description"),
+    "doi":("record_doi","doi"),
+    "eisbn":("record_eisbn","eisbn_"),
+    "eissn":("record_eissn","eissn_"),
+    "embargoFct":("record_embargoFct","embargoFct"),
+    "eventLocation":("record_eventLocation","eventLocation"),
+    "eventTitle":("record_eventTitle","eventTitle"),
+    "eventType":("record_eventType","eventType"),
+    "export":("record_export","export"),
+    "fundingAward":("record_fundingAward","fundingAward_"),
+    "fundingStream":("record_fundingStream","fundingStream_"),
+    "isPartOfSeries":("record_isPartOfSeries","isPartOfSeries"),
+    "isbn":("record_isbn","isbn_"),
+    "issn":("record_issn","issn_"),
+    "language":("record_language","language"),
+    "ogUri":("record_ogUri","ogUri"),
+    "other":("record_other","other"),
+    "pagination":("record_pagination","pagination"),
+    "peerReviewed":("record_peerReviewed","peerReviewed"),
+    "pmc":("record_pmc","pmc"),
+    "pmid":("record_pmid","pmid"),
+    "publicationStatus":("record_publicationStatus","publicationStatus"),
+    "publicationversion":("record_publicationversion","publicationversion"),
+    "publisherVersion":("record_publisherVersion","publisherVersion"),
+    "relation":("record_relation","relation"),
+    "relationUri":("record_relationUri","relationUri"),
+    "rights":("record_rights","rights"),
+    "rightsUri":("record_rightsUri","rightsUri"),
+    "sponsorship":("record_sponsorship","sponsorship"),
+    "tid":("record_tid","tid"),
+    "title":("record_title","title"),
+    "type":("record_type","type"),
+    "uoei":("record_uoei","uoei"),
+    "version":("record_version","version"),
+    "volume":("record_volume","volume"),
+    "file":("record_file","file_"),
 }
 
 record_relations = {
-    "publisher_": ("published_by","published_"),
+    "publisher_": ("published_by","published"),
     "author_": ("authored_by","authored"),
     "advisor_": ("advised_by","advised"),
     "editor_": ("edited_by","edited"),
     "other_": ("contributed_by","contributed"),
     "department_": ("in_dep","dep_has_rec"),
     "journal_": ("in_journal","with_record"),
-    "funder_": ("funded_by","funded")
+    "funder_": ("funded_by","funded"),
+    "subject_": ("has_subject","is_subject_in")
 }
-
-# data do sistema em formato ANSI ISO
-data_hora_atual = datetime.now()
-data_iso_formatada = data_hora_atual.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 # GraphDB endpoint details
 graphdb_endpoint = "http://localhost:7200/repositories/repositorium"
@@ -174,6 +166,8 @@ SELECT * WHERE {{
                     curr['names'] = [(r['name'],id)]
         data.append(curr)
         count = countResult[0].get('count')
+        print(data[2])
+        print(query)
         with open("debugDumpQuery.json",'w') as f:
             json.dump(data,f,indent=4,ensure_ascii=False)
         filter_switch()
@@ -222,8 +216,17 @@ def getAllRelations():
         ?funders :funding_name ?name.
     }}
     """
+    query_subjects = f"""
+    PREFIX : {prefix}
+    SELECT DISTINCT ?subjects ?name WHERE {{
+        ?r :has_subject ?subjects.
+        ?subjects :subject_ ?name.
+    }}
+    """
+    
     data = {}
     data["publishers"] = getRelationsLst(query_publishers,"publishers")
+    data["subjects"] = getRelationsLst(query_subjects,"subjects")
     data["contributors"] = getRelationsLst(query_contributors,"contributors")
     data["journals"] = getRelationsLst(query_journals,"journals")
     data["departments"] = getRelationsLst(query_departments,"departments")
@@ -237,7 +240,13 @@ def listRecordsPOST(form, page_to_render = 'listRecords.html'):
     contributor = form.get('contributor')
     order_by = form.get('orderBy')
 
+    department = form.get('department')
+    keyword = form.get('keyword')
+
+
     line_id, line_contributor, line_order_by_stamp,line_order_by_cont,line_title  = "", "", "","",""
+    line_keyword, line_department = "", ""
+
     if record_id and record_id != "":
         line_id = f'?r :record_id ?id.\n?r :record_id "{record_id}".'
     else:
@@ -253,7 +262,6 @@ def listRecordsPOST(form, page_to_render = 'listRecords.html'):
             OPTIONAL {{ ?r :record_title ?title. }}
             OPTIONAL {{ ?r :record_alternativeTitle ?altTitle. }}
         """
-    
     if contributor and contributor != "":
         line_contributor = f"""
         ?r :contributed_by ?contributor.
@@ -265,6 +273,17 @@ def listRecordsPOST(form, page_to_render = 'listRecords.html'):
         ?r :contributed_by ?contributor.
         optional{?contributor :contributor_name ?nameContributor.}
         """
+    if department and department != "":
+        line_department = f'''
+        ?r :in_dep ?dep.
+        ?dep :department_name ?nameDepartment.
+        FILTER (CONTAINS(LCASE(STR(?nameDepartment)), "{department}")).'''
+
+    if keyword and keyword != "":
+        line_keyword = f'''
+        ?r :has_subject ?sub.
+        ?sub :subject_ ?nameSubject.
+        FILTER (CONTAINS(LCASE(STR(?nameSubject)), "{keyword}")).'''
     
     if order_by and order_by != "":
         if order_by == "alc":
@@ -289,6 +308,8 @@ def listRecordsPOST(form, page_to_render = 'listRecords.html'):
                 {line_title}
                 {line_id}
                 {line_contributor}
+                {line_department}
+                {line_keyword}
             }}{line_order_by_stamp} LIMIT {limit} OFFSET {(page-1)*limit}
         }}
     {line_id}
@@ -297,7 +318,7 @@ def listRecordsPOST(form, page_to_render = 'listRecords.html'):
     {line_contributor}
     }} {line_order_by_cont}
     """
-    
+    print(sparql_query)
     jsonReponse = sparql_get_query(sparql_query)
     result = jsonReponse["results"]["bindings"]
     if result:
@@ -335,100 +356,51 @@ def getTriplosUpdate(id,form):
     triplosInsert = []
     triplosDelete = []
 
-    for r in record_fields:
-        if form.get(r)!=None:
-            triplosInsert.append(f':{id} :{record_fields[r]} "{form[r]}".')
-            triplosDelete.append(f":{id} :{record_fields[r]} ?o.")
-
-    # for field in record_fields:
-    #     fields = [key for key in form if key.startswith(f)]
-    #     for f in fields:
-    #         triplosInsert.append(f':{id} :{record_fields[field]} "{form[f]}".')
-    #         triplosDelete.append(f":{id} :{record_fields[field]} ?o.")
+    for field in record_fields:
+        fields = [key for key in form if key.startswith(record_fields[field][1])]
+        for f in fields:
+            triplosInsert.append(f':{id} :{record_fields[field][0]} "{form[f]}".')
+            triplosDelete.append(f":{id} :{record_fields[field][0]} ?o.")
 
     for rel in record_relations:
         rels = [key for key in form if key.startswith(rel)]
         for r in rels:
-            triplosInsert.append(f':{id} :{record_relations[rel][0]} :{form[r].split("-")[0].strip()}.')    
-            triplosInsert.append(f':{form[r].split("-")[0].strip()} :{record_relations[rel][1]} :{id}.')
-
+            if ":" in form[r]: 
+                triplosInsert.append(f':{id} :{record_relations[rel][0]} :{form[r].split(":")[0].strip()}.')    
+                triplosInsert.append(f':{form[r].split(":")[0].strip()} :{record_relations[rel][1]} :{id}.')
+            else:
+                pass
             triplosDelete.append(f":{id} :{record_relations[rel][0]} ?o.")
             triplosDelete.append(f"?o :{record_relations[rel][1]} :{id}.")
+
         
     return triplosInsert,triplosDelete
 
+def getNextId(ent):
+    
+    id_query = f"""
+    PREFIX : {prefix}
+    SELECT ?id WHERE {{
+    ?s :record_id ?id.
+    FILTER (regex(?id, "^0000/\\\\d$")).
+    }}"""
 
 def getRecordById(id):
  
     print(id)
+    triplos = []
+    for k,(a,_) in record_fields.items():
+        triplos.append(f"optional {{:{id} :{a} ?{k}.}}")
 
+    nl = "\n"
     sparql_query = f"""
     PREFIX : {prefix}
     select * where {{ 
     :{id} a :Record.
-    optional {{:{id} :record_id ?id.}}
-    optional {{:{id} :record_timestamp ?timestamp.}}
+    :{id} :record_id ?id.
+    :{id} :record_timestamp ?timestamp.
     optional {{:{id} :record_title ?title.}}
-    optional {{:{id} :record_abstract ?abstract.}}
-    optional {{:{id} :record_alternativeTitle ?alternativeTitle.}}
-    optional {{:{id} :record_articlenumber ?articlenumber.}}
-    optional {{:{id} :record_bookTitle ?bookTitle.}}
-    optional {{:{id} :record_citation ?citation.}}
-    optional {{:{id} :record_citationConferenceDate ?citationConferenceDate.}}
-    optional {{:{id} :record_citationConferencePlace ?citationConferencePlace.}}
-    optional {{:{id} :record_citationEdition ?citationEdition.}}
-    optional {{:{id} :record_citationEndPage ?citationEndPage.}}
-    optional {{:{id} :record_citationIssue ?citationIssue.}}
-    optional {{:{id} :record_citationStartPage ?citationStartPage.}}
-    optional {{:{id} :record_citationTitle ?citationTitle.}}
-    optional {{:{id} :record_citationVolume ?citationVolume.}}
-    optional {{:{id} :record_comments ?comments.}}
-    optional {{:{id} :record_conferencePublication ?conferencePublication.}}
-    optional {{:{id} :record_dateEmbargo ?dateEmbargo.}}
-    optional {{:{id} :record_dateIssued ?dateIssued.}}
-    optional {{:{id} :record_degre_grade ?degre_grade.}}
-    optional {{:{id} :record_degree_grantor ?degree_grantor.}}
-    optional {{:{id} :record_description ?description.}}
-    optional {{:{id} :record_doi ?doi.}}
-    optional {{:{id} :record_eisbn ?eisbn.}}
-    optional {{:{id} :record_eissn ?eissn.}}
-    optional {{:{id} :record_embargoFct ?embargoFct.}}
-    optional {{:{id} :record_eventLocation ?eventLocation.}}
-    optional {{:{id} :record_eventTitle ?eventTitle.}}
-    optional {{:{id} :record_eventType ?eventType.}}
-    optional {{:{id} :record_export ?export.}}
-    optional {{:{id} :record_exportIdentifier ?exportIdentifier.}}
-    optional {{:{id} :record_fundingAward ?fundingAward.}}
-    optional {{:{id} :record_fundingStream ?fundingStream.}}
-    optional {{:{id} :record_hasVersion ?hasVersion.}}
-    optional {{:{id} :record_isBasedOn ?isBasedOn.}}
-    optional {{:{id} :record_isPartOfSeries ?isPartOfSeries.}}
-    optional {{:{id} :record_isVersionOf ?isVersionOf.}}
-    optional {{:{id} :record_isbn ?isbn.}}
-    optional {{:{id} :record_issn ?issn.}}
-    optional {{:{id} :record_journal ?journal.}}
-    optional {{:{id} :record_language ?language.}}
-    optional {{:{id} :record_number ?number.}}
-    optional {{:{id} :record_ogUri ?ogUri.}}
-    optional {{:{id} :record_other ?other.}}
-    optional {{:{id} :record_pagination ?pagination.}}
-    optional {{:{id} :record_peerReviewed ?peerReviewed.}}
-    optional {{:{id} :record_pmc ?pmc.}}
-    optional {{:{id} :record_pmid ?pmid.}}
-    optional {{:{id} :record_publicationStatus ?publicationStatus.}}
-    optional {{:{id} :record_publicationversion ?publicationversion.}}
-    optional {{:{id} :record_publisherVersion ?publisherVersion.}}
-    optional {{:{id} :record_relation ?relation.}}
-    optional {{:{id} :record_relationUri ?relationUri.}}
-    optional {{:{id} :record_rights ?rights.}}
-    optional {{:{id} :record_rightsUri ?rightsUri.}}
-    optional {{:{id} :record_slug ?slug.}}
-    optional {{:{id} :record_sponsorship ?sponsorship.}}
-    optional {{:{id} :record_tid ?tid.}}
-    optional {{:{id} :record_type ?type.}}
-    optional {{:{id} :record_uoei ?uoei.}}
-    optional {{:{id} :record_version ?version.}}
-    optional {{:{id} :record_volume ?volume.}}
+    {nl.join(triplos)}
     }}"""
 
 
@@ -511,12 +483,21 @@ def getRecordRelations(id):
     ?funders :funded :{id}.
     }}
 """
-    
+    subjects_query = f"""
+    PREFIX : {prefix}
+    select * where {{ 
+    ?subjects a :Subject.
+    ?subjects :subject_ ?name.
+    ?subjects :is_subject_in :{id}.
+    }}
+"""
+
     data = {}
     data['authors'] = getRelationsLst(authors_query,'authors')
     data['editors'] = getRelationsLst(editors_query,'editors')
     data['advisors'] = getRelationsLst(advisors_query,'advisors')
     data['publisher'] = getRelationsLst(publisher_query,'publisher')
+    data['subjects'] = getRelationsLst(subjects_query,'subjects')
     data['others'] = getRelationsLst(others_query,'others')
     data['journals'] = getRelationsLst(journals_query,'journals')
     data['departments'] = getRelationsLst(departments_query,'departments')
@@ -529,7 +510,6 @@ def createRecordGET():
 
     recordFields = [r for r in record_fields if r.lower()!= "oguri" and r.lower()!= "other"]
     data = {}
-    #data=[r[0].replace("_",'s') for r in record_relations]
     data['recordFields'] = recordFields
     allData = getAllRelations()
 
@@ -601,15 +581,7 @@ def createRecordPOST(form):
     uri = f"record_0000_{i}"
     id = f"0000/{i}"
     
-    # relations = ["authors","editors","advisors","journals","departments","publishers","fundingEnts"]
     triplos,_ = getTriplosUpdate(uri,form)
-    # for rel in relations:
-    #     relLst = form.get(rel) #contributor_0; contributor_1; contributor_2
-    #     if relLst:
-    #         l = relLst.split(";")
-    #         for r in l:
-    #             triplos.append(getTriplosMultiplos(rel,uri,r))
-
 
     data_hora_atual = datetime.now()
     data_iso_formatada = data_hora_atual.strftime('%Y-%m-%dT%H:%M:%S+00:00')
@@ -883,7 +855,7 @@ def recordEdit(id):
 
 @app.route('/')
 def index():
-    return render_template('index.html', data = {"data": data_iso_formatada})
+    return render_template('index.html')
 
 
 if __name__ == '__main__':

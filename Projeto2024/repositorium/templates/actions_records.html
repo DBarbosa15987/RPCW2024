@@ -40,7 +40,7 @@
                     <th> Actions </th>
                     <th>ID Record</th>
                     <th>Title Record</th>
-                    <th>Authors</th>
+                    <th>Contributors</th>
                     <th>Date Record</th>
                 </tr>
                 {% for record in listRecords %}
@@ -50,7 +50,7 @@
                         <a href="updateRecord/{{ record_id }}" >✏️</a>
 
                         <button type="button" class="deleteButton" data-id="{{ record_id }}">🗑️</button>
-                        <button type="button" class="editButton" data-id="{{ record_id }}">✏️</button>
+                        <!--<button type="button" class="editButton" data-id="{{ record_id }}">✏️</button>-->
                     </td>
                     <td><a href="record/{{ record_id }}"> {{ record.id.value }} </a></td>
                     <td><a href="record/{{ record_id }}"> {{ record.title.value }} </a></td>
