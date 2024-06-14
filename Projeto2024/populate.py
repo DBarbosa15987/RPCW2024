@@ -16,13 +16,7 @@ print("Parsed")
 # print(decoded_string)
 
 debugDic={
-"departments":{},
-"publisher":[],
-"subjects":[],
-"journals":{},
-"fundEnt":{}
 }
-attribSet = set()
 
 contributorCreated = {}
 departmentsCreated = set()
@@ -105,10 +99,12 @@ def parse_identifier(qualifier, value ,recordUri):
         g.add((recordUri, ns.record_ogUri, Literal(value)))
     elif qualifier == "doi":
         g.add((recordUri, ns.record_doi, Literal(value)))
+    elif qualifier == "pmc":
+        g.add((recordUri, ns.record_pmc, Literal(value)))
     elif qualifier == "pmid":
         g.add((recordUri, ns.record_pmid, Literal(value)))
     elif qualifier == "tid":
-        g.add((recordUri, ns.record_issn, Literal(value)))
+        g.add((recordUri, ns.record_tid, Literal(value)))
     elif qualifier == "other":
         g.add((recordUri, ns.record_other, Literal(value)))
     elif qualifier == "eisbn":
@@ -117,6 +113,8 @@ def parse_identifier(qualifier, value ,recordUri):
         g.add((recordUri, ns.record_isbn, Literal(value)))
     elif qualifier == "eissn":
         g.add((recordUri, ns.record_eissn, Literal(value)))
+    elif qualifier == "articlenumber":
+        g.add((recordUri, ns.record_articlenumber, Literal(value)))
     else:
         pass
 
@@ -238,6 +236,17 @@ def parse_event(qualifier, value ,recordUri):
     if qualifier == "type":
         g.add((recordUri,ns.record_eventType,Literal(value)))
 
+def parse_relation(qualifier, value ,recordUri):
+    if qualifier == "ispartofseries":
+        g.add((recordUri,ns.record_isPartOfSeries,Literal(value)))
+    elif qualifier == "publisherversion":
+        g.add((recordUri,ns.record_publisherVersion,Literal(value)))
+    elif qualifier == "uri":
+        g.add((recordUri,ns.record_relationUri,Literal(value)))
+    else:
+        g.add((recordUri,ns.record_relation,Literal(value)))
+
+
 def process_qualifiers(element, qualifier, authority, confidence, value ,recordUri):
 
     if element == "contributor":
@@ -323,7 +332,21 @@ def process_qualifiers(element, qualifier, authority, confidence, value ,recordU
 
     elif element == "degree":
         parse_degree(qualifier, value ,recordUri)
+
+    elif element == "embargofct":
+        g.add((recordUri,ns.record_embargoFct,Literal(value)))
     
+    elif element == "relation":
+        parse_relation(qualifier,value,recordUri)
+
+    elif element == "number":
+        g.add((recordUri,ns.record_number,Literal(value)))
+
+    elif element == "pagination":
+        g.add((recordUri,ns.record_pagination,Literal(value)))
+
+    elif element == "volume":
+        g.add((recordUri,ns.record_volume,Literal(value)))
 
 def getInfoDIM(xmlString):
 
@@ -367,10 +390,6 @@ def getInfoDIM(xmlString):
             eventData = {}
 
             for field in fields:
-                
-                for a in field.attrib:
-                    attribSet.add(a)
-
                 element = field.attrib.get("element")
                 qualifier = field.attrib.get("qualifier")
                 authority = field.attrib.get("authority")
@@ -408,10 +427,9 @@ def getInfoOPEN_AIRE(xmlString):
                 if funder_name_elem is None:
                     continue
                 
-                fund_ent_name_processed = funder_name_elem.text.lower().replace(" ","_")
                 funder_name = funder_name_elem.text
 
-                if fund_ent_uri in fundEntCreated:
+                if funder_name in fundEntCreated:
                     fund_ent_uri = fundEntCreated[funder_name]
                 else:
                     fund_ent_uri = URIRef(f"{ns}fund_ent_{counterFundEnt}")
@@ -434,6 +452,10 @@ def getInfoOPEN_AIRE(xmlString):
                 if award_number_elem is not None:
                     g.add((recordUri,ns.record_fundingAward, Literal(award_number_elem.text)))
 
+            files = resource.findall('.//{http://namespace.openaire.eu/schema/oaire/}file')
+            for file in files:
+                file_url = file.text
+                g.add((recordUri,ns.record_file,Literal(file_url)))
 
 depFile = open("sets.json")
 departments = json.load(depFile)
