@@ -25,16 +25,25 @@
                     <th>Data</th>
                     <th>Value</th>
                 </tr>
-            {% for key, value  in data.recordFields %}
+                {% for key, value in data.recordFields %}
                 <tr>
-                    <td> <b>{{ key }}</b> </td>
-                    {%if key == "file"%}
-                    <td><a href="{{value}}">{{ value }}<a></td>
-                    {%else%}
-                    <td> {{ value }}</td>
-                    {%endif%}
+                <td> <b>{{ key }}</b> </td>
+                <td>
+                    {%for item in value%}
+                        {%if key == "file"%}
+                        <a href="{{item}}">{{ item }}<a>
+                        {%else%}
+                        {{ item }}
+                        {%endif%}
+
+                        {% if not loop.last %}
+                            <hr>
+                        {% endif %}
+                    {%endfor%}
+                    </td>
+    
                 </tr>
-            {% endfor %}
+                {% endfor %}
             </table>
 
             <br><br><br><hr>

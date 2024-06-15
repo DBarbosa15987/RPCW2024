@@ -28,17 +28,18 @@
                 
                 {% for field in data.recordFields %}
                 <div>
-                    
                     <h3 style="margin-bottom: 0%;">{{field[0].capitalize()}}</h3>
                     <div id="{{ field[0] }}-container">
-                    {% if field[0].capitalize() != "Id" and field[0].capitalize() != "Timestamp" and field[0].capitalize() != "Oguri" %}
-                    <input type="text" id="{{ field[0] }}" value="{{ field[1] }}" name="{{ field[0] }}">
-                    {% else %}
-                    🔒 <input type="text" id="{{ field[0] }}" value="{{ field[1] }}" name="{{ field[0] }}" disabled>
-                    {% endif %}
+                    {% for value in field[1] %}
+                        {% if field[0].capitalize() != "Id" and field[0].capitalize() != "Timestamp" and field[0].capitalize() != "Oguri" %}
+                        <input type="text" id="{{ field[0] }}_{{loop.index}}" value="{{ value }}" name="{{ field[0] }}">
+                        {% else %}
+                        🔒 <input type="text" id="{{ field[0] }}_{{loop.index}}" value="{{ value }}" name="{{ field[0] }}" disabled>
+                        {% endif %}
+                    {% endfor %}
 
-                    {% if field[0].capitalize() == "Abstract" or field[0].capitalize() == "Issn" or field[0].capitalize() == "Isbn" or field[0].capitalize() == "Alternativetitle" or field[0].capitalize() == "Comments" or field[0].capitalize() == "Conferencepublication" or field[0].capitalize() == "Eissn" or field[0].capitalize() == "Eisbn" or field[0].capitalize() == "Fundingstream" or field[0].capitalize() == "Fundingaward"%}
-                        <button type="button" id="add-field_{{field[0]}}">+</button>
+                    {% if field[0].capitalize() in ["Abstract", "Issn", "Isbn", "Alternativetitle", "Comments", "Conferencepublication", "Eissn", "Eisbn", "Fundingstream", "Fundingaward"] %}
+                    <button type="button" class="add-field" data-field="{{ field[0] }}">+</button>
                     {% endif %}
                     </div>
                 </div>
@@ -120,37 +121,37 @@
         // Initialize autocomplete for the first author input
         var availableTags = [
             {% for value in allData.contributors %} 
-            "{{value.id}}: {{value.name}}",
+            "{{value.id}}:: {{value.name}}",
             {% endfor %} 
         ];
 
         var availableTagsDepartments = [
             {% for value in allData.departments %} 
-            "{{value.id}}: {{value.name}}",
+            "{{value.id}}:: {{value.name}}",
             {% endfor %} 
         ];
 
         var availableTagsJournals = [
             {% for value in allData.journals %} 
-            "{{value.id}}: {{value.name}}",
+            "{{value.id}}:: {{value.name}}",
             {% endfor %} 
         ];
 
         var availableTagsPublishers = [
             {% for value in allData.publishers %} 
-            "{{value.id}}: {{value.name}}",
+            "{{value.id}}:: {{value.name}}",
             {% endfor %} 
         ];
 
         var availableTagsFunders = [
             {% for value in allData.funders %} 
-            "{{value.id}}: {{value.name}}",
+            "{{value.id}}:: {{value.name}}",
             {% endfor %} 
         ];
 
         var availableTagsSubjects = [
             {% for value in allData.subjects %} 
-            "{{value.name}}",
+            "{{value.id}}:: {{value.name}}",
             {% endfor %} 
         ];
 
@@ -158,56 +159,56 @@
         // Initialize present values of the record
         let authors = [
             {% for author in data.authors %}
-                "{{author.id}}: {{author.name}}"{% if not loop.last %},{% endif %}
+                "{{author.id}}:: {{author.name}}"{% if not loop.last %},{% endif %}
                 // "{{ author }}"{% if not loop.last %},{% endif %}
             {% endfor %}
         ];
 
         let editors = [
             {% for author in data.editors %}
-                "{{author.id}}: {{author.name}}"{% if not loop.last %},{% endif %}
+                "{{author.id}}:: {{author.name}}"{% if not loop.last %},{% endif %}
                 // "{{ author }}"{% if not loop.last %},{% endif %}
             {% endfor %}
         ];
         
         let advisors = [
             {% for author in data.advisors %}
-                "{{author.id}}: {{author.name}}"{% if not loop.last %},{% endif %}
+                "{{author.id}}:: {{author.name}}"{% if not loop.last %},{% endif %}
                 // "{{ author }}"{% if not loop.last %},{% endif %}
             {% endfor %}
         ];
 
         let departments = [
             {% for author in data.departments %}
-                "{{author.id}}: {{author.name}}"{% if not loop.last %},{% endif %}
+                "{{author.id}}:: {{author.name}}"{% if not loop.last %},{% endif %}
                 // "{{ author }}"{% if not loop.last %},{% endif %}
             {% endfor %}
         ];
 
         let journals = [
             {% for author in data.journals %}
-                "{{author.id}}: {{author.name}}"{% if not loop.last %},{% endif %}
+                "{{author.id}}:: {{author.name}}"{% if not loop.last %},{% endif %}
                 // "{{ author }}"{% if not loop.last %},{% endif %}
             {% endfor %}
         ];
         
         let publishers = [
             {% for author in data.publishers %}
-                "{{author.id}}: {{author.name}}"{% if not loop.last %},{% endif %}
+                "{{author.id}}:: {{author.name}}"{% if not loop.last %},{% endif %}
                 // "{{ author }}"{% if not loop.last %},{% endif %}
             {% endfor %}
         ];
 
         let funders = [
             {% for author in data.funders %}
-                "{{author.id}}: {{author.name}}"{% if not loop.last %},{% endif %}
+                "{{author.id}}:: {{author.name}}"{% if not loop.last %},{% endif %}
                 // "{{ author }}"{% if not loop.last %},{% endif %}
             {% endfor %}
         ];
 
         let subjects = [
             {% for author in data.subjects %}
-                "{{author.id}}: {{author.name}}"{% if not loop.last %},{% endif %}
+                "{{author.id}}:: {{author.name}}"{% if not loop.last %},{% endif %}
                 // "{{ author }}"{% if not loop.last %},{% endif %}
             {% endfor %}
         ];
@@ -583,6 +584,59 @@ function addjournalInput(journalName) {
         });
         applyAutocomplete('journal_1', availableTagsJournals);
 
+
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+    // Initialize a counter object to keep track of added fields
+    let counter = {};
+
+    // Loop through each add-field button
+    document.querySelectorAll('.add-field').forEach(button => {
+        button.addEventListener('click', function() {
+            const field = this.getAttribute('data-field');
+            const container = document.getElementById(`${field}-container`);
+
+            // Increment the counter for this field
+            if (!counter[field]) {
+                counter[field] = 1;
+            } else {
+                counter[field]++;
+            }
+
+            const newInputId = `${field}_${counter[field]}`;
+
+            // Create a container div for the input and remove button
+            const inputContainer = document.createElement('div');
+
+            // Create the new input element
+            const newInput = document.createElement('input');
+            newInput.type = 'text';
+            newInput.name = newInputId;
+            newInput.id = newInputId;
+
+            // Create the remove button
+            const removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.innerHTML = '-';
+            removeButton.addEventListener('click', function() {
+                // Remove the entire inputContainer div
+                container.removeChild(inputContainer);
+            });
+
+            // Append the input and remove button to the container div
+            inputContainer.appendChild(newInput);
+            inputContainer.appendChild(removeButton);
+
+            // Append the container div to the main container
+            container.appendChild(inputContainer);
+        });
+
+        // Count existing fields on page load for synchronization
+        const field = button.getAttribute('data-field');
+        const container = document.getElementById(`${field}-container`);
+        counter[field] = container.children.length; // Initialize counter with existing count
+    });
+});
     </script>
 </body>
 

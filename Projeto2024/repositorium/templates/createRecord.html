@@ -158,37 +158,37 @@
         // Initialize autocomplete for the first author input
         var availableTags = [
             {% for value in allData.contributors %} 
-            "{{value.id}}: {{value.name}}",
+            "{{value.id}}:: {{value.name}}",
             {% endfor %} 
         ];
 
         var availableTagsDepartments = [
             {% for value in allData.departments %} 
-            "{{value.id}}: {{value.name}}",
+            "{{value.id}}:: {{value.name}}",
             {% endfor %} 
         ];
 
         var availableTagsJournals = [
             {% for value in allData.journals %} 
-            "{{value.id}}: {{value.name}}",
+            "{{value.id}}:: {{value.name}}",
             {% endfor %} 
         ];
 
         var availableTagsPublishers = [
             {% for value in allData.publishers %} 
-            "{{value.id}}: {{value.name}}",
+            "{{value.id}}:: {{value.name}}",
             {% endfor %} 
         ];
 
         var availableTagsFunders = [
             {% for value in allData.funders %} 
-            "{{value.id}}: {{value.name}}",
+            "{{value.id}}:: {{value.name}}",
             {% endfor %} 
         ];
 
         var availableTagsSubjects = [
             {% for value in allData.subjects %} 
-            "{{value.name}}",
+            "{{value.id}}:: {{value.name}}",
             {% endfor %} 
         ];
         

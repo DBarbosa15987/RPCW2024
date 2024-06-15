@@ -166,7 +166,6 @@ SELECT * WHERE {{
                     curr['names'] = [(r['name'],id)]
         data.append(curr)
         count = countResult[0].get('count')
-        print(data[2])
         print(query)
         with open("debugDumpQuery.json",'w') as f:
             json.dump(data,f,indent=4,ensure_ascii=False)
@@ -365,25 +364,45 @@ def getTriplosUpdate(id,form):
     for rel in record_relations:
         rels = [key for key in form if key.startswith(rel)]
         for r in rels:
-            if ":" in form[r]: 
-                triplosInsert.append(f':{id} :{record_relations[rel][0]} :{form[r].split(":")[0].strip()}.')    
-                triplosInsert.append(f':{form[r].split(":")[0].strip()} :{record_relations[rel][1]} :{id}.')
+            if "::" in form[r]: 
+                triplosInsert.append(f':{id} :{record_relations[rel][0]} :{form[r].split("::")[0].strip()}.')    
+                triplosInsert.append(f':{form[r].split("::")[0].strip()} :{record_relations[rel][1]} :{id}.')
             else:
-                pass
+                if r.startswith("subject_"):
+                    t,newsuburi = getNewSubject(form[r])
+                    triplosInsert.append(t)
+                    triplosInsert.append(f':{id} :{record_relations[rel][0]} :{newsuburi}.')    
+                    triplosInsert.append(f':{newsuburi} :{record_relations[rel][1]} :{id}.')
+                    
+                else:
+                    print(f"{r}:{form[r]} not added!!")
+                
             triplosDelete.append(f":{id} :{record_relations[rel][0]} ?o.")
             triplosDelete.append(f"?o :{record_relations[rel][1]} :{id}.")
 
         
     return triplosInsert,triplosDelete
 
-def getNextId(ent):
+def getNewSubject(s):
     
-    id_query = f"""
-    PREFIX : {prefix}
-    SELECT ?id WHERE {{
-    ?s :record_id ?id.
-    FILTER (regex(?id, "^0000/\\\\d$")).
-    }}"""
+    query = f"""
+PREFIX : {prefix}
+SELECT ?s (REPLACE(STR(?s), "^.*subject_", "") as ?id)
+WHERE {{
+?s a :Subject .
+?s :subject_ ?name.
+}}"""
+    
+    jsonReponse = sparql_get_query(query)
+    result = jsonReponse["results"]["bindings"]
+    i=0
+    if result:
+        i=max([int(x['id']['value']) for x in result]) + 1
+    newuri = f"subject_{i}"
+    return f':{newuri} :subject_ "{s}".',newuri
+        
+
+
 
 def getRecordById(id):
  
@@ -607,11 +626,24 @@ INSERT DATA {{
 def updateRecordGET(id):
     id_to_query = f"record_{id}"
     result = getRecordById(id_to_query)
+
+    recordFields = {}
     if result:
-        recordFields = [(k, r['value']) for k, r in result[0].items()]
+        for r in result:
+            for k,v in r.items():
+                if k in recordFields:
+                    recordFields[k].add(v['value'])
+                else:
+                    recordFields[k] = set([v['value']])
+        #recordFields = [(k,list(r)) for k,r in recordFields.items()]
         data = getRecordRelations(id_to_query)
-        data['recordFields'] = recordFields
-        print(id_to_query)
+        data['recordFields'] = recordFields.items()
+
+    # if result:
+    #     recordFields = [(k, r['value']) for k, r in result[0].items()]
+    #     data = getRecordRelations(id_to_query)
+    #     data['recordFields'] = recordFields
+    #     print(id_to_query)
         allData = getAllRelations()
         return render_template('updateRecord.html', data=data, allData=allData,id=id)
     else:
@@ -727,11 +759,17 @@ def records(id):
     id_to_query = f"record_{id}"
 
     result = getRecordById(id_to_query)
-
+    recordFields = {}
     if result:
-        recordFields = [(k,r['value']) for k,r in result[0].items()]
+        for r in result:
+            for k,v in r.items():
+                if k in recordFields:
+                    recordFields[k].add(v['value'])
+                else:
+                    recordFields[k] = set([v['value']])
+        #recordFields = [(k,list(r)) for k,r in recordFields.items()]
         data = getRecordRelations(id_to_query)
-        data['recordFields'] = recordFields
+        data['recordFields'] = recordFields.items()
         
         return render_template('record.html', data=data)
     else:
