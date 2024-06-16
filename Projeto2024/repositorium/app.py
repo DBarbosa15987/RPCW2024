@@ -167,13 +167,11 @@ SELECT * WHERE {{
         data.append(curr)
         count = countResult[0].get('count')
         print(query)
-        with open("debugDumpQuery.json",'w') as f:
-            json.dump(data,f,indent=4,ensure_ascii=False)
         filter_switch()
 
         return render_template(page_to_render, listRecords=data, page = page, count=count, filter_route=current_filter_route)
     else:
-        return render_template(page_to_render, data=[])
+        return render_template(page_to_render, data=[],count=0)
 
 
 def getAllRelations():
@@ -357,7 +355,7 @@ def listRecordsPOST(form, page_to_render = 'listRecords.html'):
         filter_switch()
         return render_template(page_to_render, listRecords=data, fr = current_filter_route,count=count)
     else:
-        return render_template(page_to_render, data=[])
+        return render_template(page_to_render, data=[],count=0)
 
 
 def getTriplosUpdate(id,form):
