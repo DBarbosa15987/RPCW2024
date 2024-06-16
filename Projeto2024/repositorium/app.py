@@ -8,6 +8,7 @@ app = Flask(__name__)
 
 
 record_fields = {
+    "title":("record_title","title"),
     "abstract":("record_abstract","abstract_"),
     "alternativeTitle":("record_alternativeTitle","alternativeTitle_"),
     "articlenumber":("record_articlenumber","articlenumber"),
@@ -57,7 +58,6 @@ record_fields = {
     "rightsUri":("record_rightsUri","rightsUri"),
     "sponsorship":("record_sponsorship","sponsorship"),
     "tid":("record_tid","tid"),
-    "title":("record_title","title"),
     "type":("record_type","type"),
     "uoei":("record_uoei","uoei"),
     "version":("record_version","version"),
@@ -242,6 +242,12 @@ def listRecordsPOST(form, page_to_render = 'listRecords.html'):
     department = form.get('department')
     keyword = form.get('keyword')
 
+    count_query = f"""   
+    PREFIX : {prefix}
+    SELECT (count(?r) as ?count) where {{
+    ?r a :Record.
+}}
+"""
 
     line_id, line_contributor, line_order_by_stamp,line_order_by_cont,line_title  = "", "", "","",""
     line_keyword, line_department = "", ""
@@ -252,13 +258,13 @@ def listRecordsPOST(form, page_to_render = 'listRecords.html'):
         line_id="?r :record_id ?id."
     if title and title != "":
         line_title = f"""
-            OPTIONAL {{ ?r :record_title ?title. }}
+            ?r :record_title ?title.
             OPTIONAL {{ ?r :record_alternativeTitle ?altTitle. }}
             FILTER (CONTAINS(LCASE(STR(?title)), "{title}") || CONTAINS(LCASE(STR(?altTitle)), "{title}")).
         """
     else :
         line_title = f"""
-            OPTIONAL {{ ?r :record_title ?title. }}
+            ?r :record_title ?title.
             OPTIONAL {{ ?r :record_alternativeTitle ?altTitle. }}
         """
     if contributor and contributor != "":
@@ -286,9 +292,9 @@ def listRecordsPOST(form, page_to_render = 'listRecords.html'):
     
     if order_by and order_by != "":
         if order_by == "alc":
-            line_order_by_cont = "ORDER BY ASC(?contributor)"
+            line_order_by_cont = "ORDER BY ASC(?title)"
         elif order_by == "ald":
-            line_order_by_cont = "ORDER BY DESC(?contributor)"
+            line_order_by_cont = "ORDER BY DESC(?title)"
         elif order_by == "dc":
             line_order_by_stamp = "ORDER BY ASC(?timestamp)"
         elif order_by == "dd":
@@ -320,6 +326,10 @@ def listRecordsPOST(form, page_to_render = 'listRecords.html'):
     print(sparql_query)
     jsonReponse = sparql_get_query(sparql_query)
     result = jsonReponse["results"]["bindings"]
+
+    jsonReponseCount = sparql_get_query(count_query)
+    countResult = jsonReponseCount["results"]["bindings"]
+    
     if result:
         data = []
         curr = {}
@@ -343,9 +353,9 @@ def listRecordsPOST(form, page_to_render = 'listRecords.html'):
                     curr['names'] = [(r['nameContributor'],id)]
 
         data.append(curr)
-
+        count = countResult[0].get('count')
         filter_switch()
-        return render_template(page_to_render, listRecords=data, fr = current_filter_route)
+        return render_template(page_to_render, listRecords=data, fr = current_filter_route,count=count)
     else:
         return render_template(page_to_render, data=[])
 
@@ -635,15 +645,8 @@ def updateRecordGET(id):
                     recordFields[k].add(v['value'])
                 else:
                     recordFields[k] = set([v['value']])
-        #recordFields = [(k,list(r)) for k,r in recordFields.items()]
         data = getRecordRelations(id_to_query)
         data['recordFields'] = recordFields.items()
-
-    # if result:
-    #     recordFields = [(k, r['value']) for k, r in result[0].items()]
-    #     data = getRecordRelations(id_to_query)
-    #     data['recordFields'] = recordFields
-    #     print(id_to_query)
         allData = getAllRelations()
         return render_template('updateRecord.html', data=data, allData=allData,id=id)
     else:

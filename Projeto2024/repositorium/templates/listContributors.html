@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>GraphDB Data</title>
-    <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}"/>
+    <link rel="icon" href="{{ url_for('static', filename='UM.jpg') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/navBar.css') }}"/>
 </head>
 <body>
@@ -20,8 +20,8 @@
         <h2>Results | {{ listContributors|length }}</h2>
         <table id="listDepartments" class="tab_green">
             <tr>
-                <th>Department ID</th>
-                <th>Department Name</th>
+                <th>Contributor ID</th>
+                <th>Contributor Name</th>
             </tr>
             {% for department in listContributors %}
             <tr>
