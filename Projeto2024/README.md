@@ -1,7 +1,7 @@
 # Repositorium v2
-```
+
 O **repositorium v2** é uma aplicação web que funciona sobre uma ontologia ttl que disponibiliza ao utilizador a capacidade de consultar, criar, apagar e editar registos. Estes registos correspondem à produção intelectual da Universidade do Minho em formato digital.
-```
+
 ## Introdução
 O presente relatório incide sobre o projeto desenvolvido para a UC RPCW pelos estudantes Diogo Barbosa (pg50326) e Alice Teixeira (pg52670), sendo que o objetivo foi desenvolver uma aplicação para gestão de uma base de dados em grafos, com base em dados obtidos do Repositorium desenvolvido pela UMinho.
 
