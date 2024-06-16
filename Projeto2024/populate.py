@@ -11,13 +11,6 @@ g.parse("ontology/repositoriumOntOriginal.ttl")
 ns = Namespace("http://rpcw.di.uminho.pt/2024/repositorium/")
 print("Parsed")
 
-# original_string = "Science &amp; Technology"
-# decoded_string = html.unescape(original_string)
-# print(decoded_string)
-
-debugDic={
-}
-
 contributorCreated = {}
 departmentsCreated = set()
 publishersCreated = {}
@@ -489,5 +482,3 @@ for file in openaireFiles:
 
 print("Serializing")
 g.serialize(format="ttl",destination="ontology/repositorium.ttl")
-with open("debugDump.json",'w') as f:
-    json.dump(debugDic,f, indent=4,ensure_ascii=False)
